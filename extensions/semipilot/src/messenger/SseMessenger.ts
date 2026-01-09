@@ -7,6 +7,9 @@
 import { IMessenger, Message, InProcessMessenger } from './IMessenger';
 import type { FromExtensionProtocol, ToExtensionProtocol } from './SemilabsProtocol';
 
+// EventSource polyfill for Node.js
+const { EventSource } = require('eventsource');
+
 export interface SseMessengerConfig {
   baseUrl: string;
   authToken?: string;
@@ -20,7 +23,7 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
   private baseUrl: string;
   private authToken?: string;
   private reconnectInterval: number;
-  private eventSource?: EventSource;
+  private eventSource?: any;
   private pendingRequests = new Map<string, {
     resolve: (value: any) => void;
     reject: (reason: any) => void;
@@ -48,7 +51,7 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       console.log('[SseMessenger] SSE connection established');
     };
     
-    this.eventSource.onerror = (error) => {
+    this.eventSource.onerror = (error: any) => {
       console.error('[SseMessenger] SSE connection error:', error);
       this.eventSource?.close();
       
@@ -60,22 +63,22 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     };
     
     // Handle specific event types
-    this.eventSource.addEventListener('domain-graph/update', (event) => {
+    this.eventSource.addEventListener('domain-graph/update', (event: any) => {
       const data = JSON.parse(event.data);
       this.invoke('domain-graph/update', data);
     });
     
-    this.eventSource.addEventListener('chat/event', (event) => {
+    this.eventSource.addEventListener('chat/event', (event: any) => {
       const data = JSON.parse(event.data);
       this.invoke('chat/event', data);
     });
     
-    this.eventSource.addEventListener('tool/event', (event) => {
+    this.eventSource.addEventListener('tool/event', (event: any) => {
       const data = JSON.parse(event.data);
       this.invoke('tool/event', data);
     });
     
-    this.eventSource.addEventListener('notification/show', (event) => {
+    this.eventSource.addEventListener('notification/show', (event: any) => {
       const data = JSON.parse(event.data);
       this.invoke('notification/show', data);
     });

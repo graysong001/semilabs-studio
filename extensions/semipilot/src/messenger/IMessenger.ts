@@ -146,7 +146,7 @@ export class InProcessMessenger<
     try {
       return listener(msg);
     } catch (error) {
-      console.error(`[IMessenger] Error handling message ${messageType}:`, error);
+      console.error(`[IMessenger] Error handling message ${String(messageType)}:`, error);
       this._onErrorHandlers.forEach((handler) => handler(msg, error as Error));
       throw error;
     }
