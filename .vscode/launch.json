@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Semipilot Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/extensions/semipilot"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/extensions/semipilot/out/**/*.js"
+      ],
+      "preLaunchTask": "${defaultBuildTask}",
+      "sourceMaps": true
+    },
+    {
+      "name": "Run Semipilot Extension (without build)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/extensions/semipilot"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/extensions/semipilot/out/**/*.js"
+      ],
+      "sourceMaps": true
+    },
+    {
+      "name": "Extension Tests",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/extensions/semipilot",
+        "--extensionTestsPath=${workspaceFolder}/extensions/semipilot/out/test/suite/index"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/extensions/semipilot/out/test/**/*.js"
+      ]
+    }
+  ]
+}

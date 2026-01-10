@@ -27,12 +27,16 @@ export function activate(context: vscode.ExtensionContext) {
     contextManager = new ContextProviderManager(workspaceRoot);
   }
   
-  // Initialize messenger
+  // Initialize messenger (manual mode - won't auto-connect)
   const backendUrl = process.env.SEMILABS_BACKEND_URL || 'http://localhost:8080/api/v1';
   messenger = new SseMessenger({
     baseUrl: backendUrl,
     reconnectInterval: 5000,
+    autoConnect: false, // Phase 1: 不自动连接，等待用户手动触发
   });
+  
+  console.log('[Semipilot] SseMessenger initialized in manual mode');
+  console.log('[Semipilot] Backend will connect when user sends first message');
   
   // Register error handler
   messenger.onError((message, error) => {
@@ -42,7 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
   // Register webview provider
   const webviewProvider = new SemipilotWebviewProvider(
     context.extensionUri,
-    context
+    context,
+    contextManager // 传递 contextManager
   );
   
   context.subscriptions.push(

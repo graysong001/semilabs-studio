@@ -14,6 +14,7 @@ export interface SseMessengerConfig {
   baseUrl: string;
   authToken?: string;
   reconnectInterval?: number;
+  autoConnect?: boolean; // 是否自动连接，默认 false
 }
 
 /**
@@ -23,7 +24,9 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
   private baseUrl: string;
   private authToken?: string;
   private reconnectInterval: number;
+  private autoConnect: boolean;
   private eventSource?: any;
+  private isConnected = false; // 连接状态
   private pendingRequests = new Map<string, {
     resolve: (value: any) => void;
     reject: (reason: any) => void;
@@ -34,7 +37,25 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     this.baseUrl = config.baseUrl;
     this.authToken = config.authToken;
     this.reconnectInterval = config.reconnectInterval ?? 5000;
+    this.autoConnect = config.autoConnect ?? false; // 默认不自动连接
     
+    // 只有当 autoConnect = true 时才自动连接
+    if (this.autoConnect) {
+      console.log('[SseMessenger] Auto-connecting to backend...');
+      this.connectSSE();
+    } else {
+      console.log('[SseMessenger] Initialized in manual mode. Call connect() to establish connection.');
+    }
+  }
+
+  /**
+   * 手动连接到 SSE 端点（公开 API）
+   */
+  connect() {
+    if (this.isConnected) {
+      console.log('[SseMessenger] Already connected');
+      return;
+    }
     this.connectSSE();
   }
 
@@ -49,17 +70,23 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     
     this.eventSource.onopen = () => {
       console.log('[SseMessenger] SSE connection established');
+      this.isConnected = true;
     };
     
     this.eventSource.onerror = (error: any) => {
       console.error('[SseMessenger] SSE connection error:', error);
+      this.isConnected = false;
       this.eventSource?.close();
       
-      // Auto-reconnect
-      setTimeout(() => {
-        console.log('[SseMessenger] Reconnecting...');
-        this.connectSSE();
-      }, this.reconnectInterval);
+      // 只有在 autoConnect 模式下才自动重连
+      if (this.autoConnect) {
+        setTimeout(() => {
+          console.log('[SseMessenger] Auto-reconnecting...');
+          this.connectSSE();
+        }, this.reconnectInterval);
+      } else {
+        console.log('[SseMessenger] Connection lost. Call connect() to reconnect manually.');
+      }
     };
     
     // Handle specific event types
@@ -160,6 +187,14 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
    */
   disconnect() {
     this.eventSource?.close();
+    this.isConnected = false;
     console.log('[SseMessenger] Disconnected');
+  }
+
+  /**
+   * 检查是否已连接
+   */
+  isConnectedToBackend(): boolean {
+    return this.isConnected;
   }
 }

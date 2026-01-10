@@ -1,0 +1,140 @@
+{
+  "timestamp": "2026-01-10T15:51:01.335Z",
+  "tests": [
+    {
+      "name": "存在 header 容器",
+      "passed": true,
+      "details": "确认顶部标题栏容器"
+    },
+    {
+      "name": "存在 header-left 区域",
+      "passed": true,
+      "details": "左侧：图标 + 标题"
+    },
+    {
+      "name": "存在 header-actions 区域",
+      "passed": true,
+      "details": "右侧：操作按钮"
+    },
+    {
+      "name": "标题文案为 SEMIPILOT: CHAT",
+      "passed": true,
+      "details": "确认标题文案"
+    },
+    {
+      "name": "使用 SVG 机器人图标",
+      "passed": true,
+      "details": "确认 SVG 格式图标"
+    },
+    {
+      "name": "使用 currentColor（黑白色调）",
+      "passed": [
+        "<svg class=\"header-icon\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\""
+      ],
+      "details": "图标颜色跟随主题"
+    },
+    {
+      "name": "New Chat 按钮",
+      "passed": true,
+      "details": "确认 headerNewChatBtn 存在"
+    },
+    {
+      "name": "Settings 按钮",
+      "passed": true,
+      "details": "确认 headerSettingsBtn 存在"
+    },
+    {
+      "name": "More 按钮",
+      "passed": true,
+      "details": "确认 headerMoreBtn 存在"
+    },
+    {
+      "name": "按钮使用 SVG 图标",
+      "passed": true,
+      "details": "至少 3 个按钮使用 SVG 图标"
+    },
+    {
+      "name": "发送按钮使用 SVG",
+      "passed": [
+        "<button class=\"send-btn\" id=\"sendBtn\" title=\"Send message\" disabled>\n                        <svg"
+      ],
+      "details": "确认 SVG 箭头图标"
+    },
+    {
+      "name": "发送按钮透明背景",
+      "passed": [
+        ".send-btn {\n            background: transparent"
+      ],
+      "details": "确认透明背景"
+    },
+    {
+      "name": "移除彩色 emoji",
+      "passed": true,
+      "details": "发送按钮不再使用 emoji"
+    },
+    {
+      "name": "所有 SVG 使用 currentColor",
+      "passed": true,
+      "details": "至少 5 个 SVG 使用 currentColor"
+    },
+    {
+      "name": "移除彩色 emoji 图标",
+      "passed": true,
+      "details": "工具按钮不再使用 emoji"
+    },
+    {
+      "name": "按钮使用透明背景",
+      "passed": true,
+      "details": "确认透明背景设计"
+    },
+    {
+      "name": "顶部标题栏在最上方",
+      "passed": true,
+      "details": "标题栏 → 消息区域 → 输入框"
+    },
+    {
+      "name": "输入框在底部",
+      "passed": true,
+      "details": "消息区域在输入框之上"
+    },
+    {
+      "name": "输入框为单列布局",
+      "passed": true,
+      "details": "输入框内部垂直排列"
+    },
+    {
+      "name": "header-btn hover 效果",
+      "passed": [
+        ".header-btn:hover {\n            background-color"
+      ],
+      "details": "按钮 hover 显示背景"
+    },
+    {
+      "name": "不透明度动态调整",
+      "passed": true,
+      "details": "按钮使用不透明度表达状态"
+    },
+    {
+      "name": "圆角设计",
+      "passed": true,
+      "details": "按钮使用圆角"
+    },
+    {
+      "name": "headerNewChatBtn 事件绑定",
+      "passed": true,
+      "details": "确认 New Chat 按钮事件"
+    },
+    {
+      "name": "headerSettingsBtn 事件绑定",
+      "passed": true,
+      "details": "确认 Settings 按钮事件"
+    },
+    {
+      "name": "headerMoreBtn 事件绑定",
+      "passed": true,
+      "details": "确认 More 按钮事件"
+    }
+  ],
+  "passed": 25,
+  "failed": 0
+}

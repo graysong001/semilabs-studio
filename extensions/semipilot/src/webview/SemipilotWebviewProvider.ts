@@ -1,15 +1,16 @@
 /**
  * @SpecTrace cap-ui-semipilot
  * 
- * Semipilot Webview Provider
+ * Semipilot Webview Provider - React + TipTap Edition
  * 
  * Responsibilities:
  * - Create and manage the Chat Panel webview
- * - Load TipTap Editor UI
+ * - Load React + TipTap Editor UI
  * - Bridge VS Code Extension <-> Webview communication
  */
 
 import * as vscode from 'vscode';
+import { ContextProviderManager } from '../context/ContextProviderManager';
 
 export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'semipilot.chatView';
@@ -18,7 +19,8 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _extensionContext: vscode.ExtensionContext
+    private readonly _extensionContext: vscode.ExtensionContext,
+    private readonly _contextManager?: ContextProviderManager // 可选，因为可能没有工作区
   ) {}
 
   public resolveWebviewView(
@@ -32,8 +34,7 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(this._extensionUri, 'out'),
-        vscode.Uri.joinPath(this._extensionUri, 'webview-ui')
+        vscode.Uri.joinPath(this._extensionUri, 'out')
       ]
     };
 
@@ -54,10 +55,19 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
           vscode.window.showInformationMessage('Semipilot Chat Panel is ready!');
           break;
         case 'userMessage':
-          this._handleUserMessage(data.message);
+          this._handleUserMessage(data.message, data.contextItems, data.agent, data.model);
           break;
         case 'contextProvider':
           this._handleContextProvider(data.providerId, data.query);
+          break;
+        case 'newChat':
+          console.log('[SemipilotWebviewProvider] New chat requested');
+          break;
+        case 'openSettings':
+          console.log('[SemipilotWebviewProvider] Settings requested');
+          break;
+        case 'moreOptions':
+          console.log('[SemipilotWebviewProvider] More options requested');
           break;
       }
     });
@@ -66,197 +76,143 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
-    // For now, use a simple inline HTML with React mount point
-    // TODO: Phase 1 Week 2 - Build actual React app with Webpack/Vite
+    // 获取打包后的 webview.js 文件路径
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'out', 'webview.js')
+    );
     
     console.log('[SemipilotWebviewProvider] Generating HTML for webview...');
     const nonce = this._getNonce();
     console.log('[SemipilotWebviewProvider] Generated nonce:', nonce);
+    console.log('[SemipilotWebviewProvider] Script URI:', scriptUri.toString());
+
+    // 宽松的 CSP 配置，允许所有 vscode-webview 资源
+    const csp = [
+      `default-src 'none'`,
+      `style-src ${webview.cspSource} 'unsafe-inline'`,
+      `font-src ${webview.cspSource}`,
+      `img-src ${webview.cspSource} https: data:`,
+      `script-src 'nonce-${nonce}'`,
+      `connect-src ${webview.cspSource} https: data:` // 允许 sourcemap 和其他连接
+    ].join('; ');
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
-    <title>Semipilot Chat</title>
+    <meta http-equiv="Content-Security-Policy" content="${csp}">
     <style>
         body {
-            padding: 10px;
-            color: var(--vscode-foreground);
-            background-color: var(--vscode-editor-background);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             font-family: var(--vscode-font-family);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-sideBar-background);
         }
         #root {
             width: 100%;
             height: 100vh;
         }
-        .editor-container {
-            border: 1px solid var(--vscode-input-border);
-            border-radius: 4px;
-            padding: 8px;
-            min-height: 100px;
-            background-color: var(--vscode-input-background);
-            position: relative;
-        }
-        .editor-container[data-placeholder]:empty:before {
-            content: attr(data-placeholder);
-            color: var(--vscode-input-placeholderForeground);
-            pointer-events: none;
-            position: absolute;
-            left: 8px;
-            top: 8px;
-        }
-        .editor-container.is-empty:before {
-            content: attr(data-placeholder);
-            color: var(--vscode-input-placeholderForeground);
-            pointer-events: none;
-            position: absolute;
-            left: 8px;
-            top: 8px;
-        }
-        .toolbar {
+        /* 加载提示 */
+        #loading {
             display: flex;
-            justify-content: flex-end;
-            margin-top: 8px;
-            gap: 8px;
-        }
-        button {
-            background-color: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: var(--vscode-button-hoverBackground);
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-size: 14px;
+            color: var(--vscode-descriptionForeground);
         }
     </style>
 </head>
 <body>
     <div id="root">
-        <h3>Semipilot Chat Panel</h3>
-        <div class="editor-container" 
-             contenteditable="true" 
-             id="editor"
-             data-placeholder="Type @ to mention context providers...">
-        </div>
-        <div class="toolbar">
-            <button id="sendBtn">Send</button>
-        </div>
+        <div id="loading">Loading Semipilot Chat...</div>
     </div>
-
     <script nonce="${nonce}">
-        // 自动诊断脚本
-        (function() {
-            const startTime = Date.now();
-            console.log('[Webview] Script started at', new Date().toISOString());
-            
-            try {
-                const vscode = acquireVsCodeApi();
-                console.log('[Webview] ✅ VSCode API acquired successfully');
-                
-                // 发送初始化成功消息
-                vscode.postMessage({
-                    type: 'webviewReady',
-                    timestamp: Date.now()
-                });
-                
-                const editor = document.getElementById('editor');
-                const sendBtn = document.getElementById('sendBtn');
-                const root = document.getElementById('root');
-                
-                console.log('[Webview] DOM elements check:');
-                console.log('  - root:', root ? '✅' : '❌');
-                console.log('  - editor:', editor ? '✅' : '❌');
-                console.log('  - sendBtn:', sendBtn ? '✅' : '❌');
-                
-                if (!editor || !sendBtn) {
-                    throw new Error('Missing required DOM elements');
-                }
-
-                // 初始化时确保显示 placeholder
-                function updatePlaceholder() {
-                    const isEmpty = !editor.textContent || editor.textContent.trim() === '';
-                    if (isEmpty) {
-                        editor.classList.add('is-empty');
-                    } else {
-                        editor.classList.remove('is-empty');
-                    }
-                }
-                
-                // 初始检查
-                updatePlaceholder();
-
-                // Simple @ mention detection (placeholder for TipTap)
-                editor.addEventListener('input', (e) => {
-                    updatePlaceholder();
-                    const text = editor.textContent;
-                    if (text.includes('@')) {
-                        console.log('[Webview] @ detected - TipTap will show dropdown here');
-                    }
-                });
-                
-                // 焦点事件也更新 placeholder
-                editor.addEventListener('focus', updatePlaceholder);
-                editor.addEventListener('blur', updatePlaceholder);
-
-                sendBtn.addEventListener('click', () => {
-                    const message = editor.textContent.trim();
-                    if (message) {
-                        console.log('[Webview] Sending message:', message);
-                        vscode.postMessage({
-                            type: 'userMessage',
-                            message: message
-                        });
-                        editor.textContent = '';
-                        editor.classList.add('is-empty'); // 清空后立即显示 placeholder
-                    }
-                });
-                
-                const loadTime = Date.now() - startTime;
-                console.log('[Webview] OK Initialization complete in ' + loadTime + 'ms');
-                console.log('[Webview] Semipilot Webview initialized (Phase 1 Week 1 Day 3 - Basic skeleton)');
-                
-                // 添加视觉反馈：在界面上显示状态
-                const statusDiv = document.createElement('div');
-                statusDiv.style.cssText = 'position: fixed; bottom: 10px; right: 10px; padding: 4px 8px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); border-radius: 3px; font-size: 11px;';
-                statusDiv.textContent = 'OK Webview Ready';
-                document.body.appendChild(statusDiv);
-                
-                // 3秒后移除状态提示
-                setTimeout(() => {
-                    statusDiv.style.transition = 'opacity 0.5s';
-                    statusDiv.style.opacity = '0';
-                    setTimeout(() => statusDiv.remove(), 500);
-                }, 3000);
-                
-            } catch (error) {
-                console.error('[Webview] ERROR Initialization failed:', error);
-                
-                // 显示错误信息在界面上
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: var(--vscode-inputValidation-errorBackground); color: var(--vscode-inputValidation-errorForeground); border: 1px solid var(--vscode-inputValidation-errorBorder); border-radius: 4px; max-width: 80%; text-align: center;';
-                errorDiv.innerHTML = '<strong>ERROR: Webview Initialization Failed</strong><br><br>' +
-                    error.message + '<br><br>' +
-                    '<small>Please open Developer Tools for details</small>';
-                document.body.appendChild(errorDiv);
+        console.log('[Webview] HTML loaded');
+        
+        // 添加全局错误处理
+        window.addEventListener('error', function(e) {
+            console.error('[Webview] Global error:', e.error || e.message);
+            var rootEl = document.getElementById('root');
+            if (rootEl) {
+                rootEl.innerHTML = '<div style="padding:20px;color:var(--vscode-errorForeground);"><h2>Error Loading Chat Panel</h2><pre>' + (e.error ? e.error.stack : e.message) + '</pre></div>';
             }
-        })();
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('[Webview] Unhandled rejection:', e.reason);
+        });
     </script>
+    <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
   }
 
-  private _handleUserMessage(message: string): void {
-    console.log('User message received:', message);
+  private _handleUserMessage(message: string, contextItems: any[], agent: string, model: string): void {
+    console.log('[SemipilotWebviewProvider] User message:', message);
+    console.log('[SemipilotWebviewProvider] Context items:', contextItems);
+    console.log('[SemipilotWebviewProvider] Agent:', agent, 'Model:', model);
     // TODO: Phase 1 Week 2 - Send to backend via SSE
   }
 
-  private _handleContextProvider(providerId: string, query: string): void {
-    console.log('Context provider query:', providerId, query);
-    // TODO: Phase 1 Week 1 Day 4 - Implement @spec provider
+  private async _handleContextProvider(providerId: string, query: string): Promise<void> {
+    console.log('[SemipilotWebviewProvider] Context provider query:', providerId, query);
+    
+    if (!this._contextManager) {
+      console.warn('[SemipilotWebviewProvider] ContextProviderManager not available');
+      this._view?.webview.postMessage({
+        type: 'contextProviderResults',
+        providerId,
+        query,
+        results: [],
+        error: 'No workspace folder opened'
+      });
+      return;
+    }
+    
+    try {
+      const provider = this._contextManager.getProvider(providerId);
+      if (!provider) {
+        console.warn(`[SemipilotWebviewProvider] Provider not found: ${providerId}`);
+        this._view?.webview.postMessage({
+          type: 'contextProviderResults',
+          providerId,
+          query,
+          results: []
+        });
+        return;
+      }
+      
+      // 调用 provider 的 search 方法
+      const results = await provider.search(query);
+      console.log(`[SemipilotWebviewProvider] Found ${results.length} results for "${query}"`);
+      
+      // 返回结果给 Webview
+      this._view?.webview.postMessage({
+        type: 'contextProviderResults',
+        providerId,
+        query,
+        results: results.map(item => ({
+          id: item.id,
+          label: item.title,
+          type: item.type,
+          description: item.description,
+          metadata: item.metadata
+        }))
+      });
+    } catch (error) {
+      console.error('[SemipilotWebviewProvider] Error querying context provider:', error);
+      this._view?.webview.postMessage({
+        type: 'contextProviderResults',
+        providerId,
+        query,
+        results: [],
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
   private _getNonce(): string {

@@ -451,6 +451,294 @@ find . -name "intent_*.md" | wc -l
 
 ---
 
+## 🆕 本项目新造术语说明
+
+这些术语是在 Semipilot Extension 开发过程中创造的项目特定术语：
+
+### 1. Semipilot
+
+**含义**: Semilabs Pilot（Semilabs 领航员/副驾驶）
+
+**命名灵感**: 参考 GitHub Copilot
+- Copilot = 副驾驶（AI 辅助编程）
+- Pilot = 领航员（AI 引导开发）
+
+**为什么不叫 Semilabs Copilot**: 避免与 GitHub Copilot 混淆，突出 "引导" 而非 "辅助" 的定位
+
+**使用场景**:
+- VS Code Extension 名称
+- Chat Panel 标题
+- 代码中的命名空间
+
+---
+
+### 2. SpecContextProvider
+
+**含义**: Spec 文档上下文提供者
+
+**命名规则**: `Spec` + `Context` + `Provider`
+- **Spec**: 规格文档（cap-*.md, spec-*.md, intent_*.md）
+- **Context**: 上下文（提供给 Chat 的背景信息）
+- **Provider**: 提供者（可插拔的模块）
+
+**为什么这样命名**:
+- ✅ 遵循 VS Code Extension 命名约定（如 FileSystemProvider）
+- ✅ 语义清晰：提供 Spec 文档作为上下文
+- ✅ 可扩展：FileContextProvider, FolderContextProvider 等
+
+**核心差异化能力**: 这是 Semilabs IDE Native 相比其他 AI Coding Assistant 的核心差异！
+
+---
+
+### 3. ContextProviderManager
+
+**含义**: 上下文提供者管理器
+
+**设计模式**: Manager Pattern（管理器模式）
+
+**职责**:
+- 注册和管理所有 Context Provider
+- 路由 @ 提及请求到对应的 Provider
+- 聚合搜索结果
+
+**为什么需要 Manager**:
+- ✅ 统一管理多个 Provider
+- ✅ 解耦：Extension 不直接依赖具体 Provider
+- ✅ 可扩展：添加新 Provider 不影响现有代码
+
+---
+
+### 4. Memory-First 原则
+
+**含义**: 文件是真相源，内存是索引，数据库是例外
+
+**英文**: File is Truth, Memory is Index, DB is Exception
+
+**设计理念**:
+```
+文件系统（File System）
+  ↓ 扫描
+内存索引（Memory Index）
+  ↓ 查询
+快速响应（< 50ms）
+```
+
+**为什么不用数据库**:
+- ✅ Spec 文档本身就是文件，不需要额外存储
+- ✅ FileWatcher 可监听文件变化，自动更新索引
+- ✅ 内存索引足够快（启动时 < 2s，搜索 < 50ms）
+- ✅ 数据库会引入额外复杂度
+
+**何时使用数据库**:
+- 需要持久化用户配置
+- 需要历史记录查询
+- 需要跨 Session 的状态管理
+
+---
+
+### 5. 3W 决策树
+
+**含义**: Who/What/When 决策树，用于判断文档归属
+
+**决策逻辑**:
+```
+┌─ Who: 通用 vs 特定项目
+│   ├─ 通用 → capabilities/
+│   └─ 特定项目 → _projects/
+│
+├─ What: 技术无关 vs 技术依赖
+│   ├─ 技术无关 → capabilities/（抽象）
+│   └─ 技术依赖 → capabilities/（标注 Semilabs 特有）
+│
+└─ When: 长期 vs 临时
+    ├─ 长期 → capabilities/
+    └─ 临时 → _projects/
+```
+
+**示例**:
+- `cap-persona-poe.md` → Who: 通用, What: 技术无关, When: 长期 → `capabilities/domain-agent/`
+- `implementation-roadmap.md` → Who: proj-002, What: 技术依赖, When: 临时 → `_projects/proj-002-ide-native/`
+
+---
+
+### 6. Domain Graph（领域图）
+
+**含义**: 轻量级的领域知识图谱
+
+**与传统知识图谱对比**:
+| 特性 | Domain Graph | 传统知识图谱 |
+|------|-------------|-------------|
+| 存储 | 内存 + 文件 | 图数据库（Neo4j） |
+| 构建 | 启动时扫描 | 预处理 + 增量 |
+| 查询 | 模糊搜索 | Cypher/SPARQL |
+| 复杂度 | 低 | 高 |
+
+**为什么叫 Graph**:
+- Spec 文档之间有引用关系（依赖、关联）
+- 可以形成一个图结构
+- 但当前只做索引，未来可扩展为真正的图
+
+**当前状态**: 只是一个 Map<string, SpecMetadata>，未来可升级为图结构
+
+---
+
+### 7. Gemini 双容器架构
+
+**含义**: 双子座架构，两个容器共享工作区
+
+**命名灵感**: Gemini = 双子座（两个紧密协作的容器）
+
+**架构**:
+```
+┌──────────────────┐   ┌──────────────────┐
+│ cont-ide-native  │   │ cont-backend-core│
+│ (VS Code + Ext)  │   │ (Spring Boot)    │
+│                  │   │                  │
+│ /workspace ──────┼───┼────→ /workspace  │
+│ (Named Volume)   │   │   (Same Volume)  │
+└──────────────────┘   └──────────────────┘
+```
+
+**为什么叫 Gemini**:
+- ✅ 两个容器紧密协作（像双子座的两颗星）
+- ✅ 共享 /workspace 目录（共享数据）
+- ✅ 语义清晰，容易记忆
+
+---
+
+### 8. IDE Native（原生 IDE 模式）
+
+**含义**: 在 IDE 中原生集成，而非 Web 控制台
+
+**对比**:
+| 模式 | IDE Native | Web Console |
+|------|-----------|-------------|
+| 运行环境 | VS Code Extension | Next.js Web App |
+| 用户群 | 开发者 | 非开发者 |
+| 交互方式 | 侧边栏 + 命令面板 | 浏览器 |
+| 部署方式 | 本地 + code-server | Docker 容器 |
+
+**为什么做 IDE Native**:
+- ✅ 开发者更习惯在 IDE 中工作
+- ✅ 可以直接访问文件系统和 Git
+- ✅ 集成度更高（如直接在编辑器中显示 Spec）
+
+---
+
+### 9. Mention Badge（提及徽章）
+
+**含义**: @ 提及后渲染的彩色标签
+
+**示例**:
+```
+输入: @spec:cap-persona-poe.md
+渲染: [📋 Poe - 需求分析 Agent] ✅ APPROVED
+       ↑ 彩色徽章，可点击查看详情或删除
+```
+
+**技术实现**: TipTap Mention 扩展 + 自定义 Node 渲染
+
+**为什么叫 Badge**:
+- ✅ 类似 GitHub 的 Label（标签）
+- ✅ 语义清晰：表示一个被提及的项目
+- ✅ 可交互（点击、删除）
+
+---
+
+### 10. Persona（Agent 角色）
+
+**含义**: AI Agent 的人格化角色定义
+
+**来源**: 用户画像（User Persona）的概念借用
+
+**在 Semilabs 中的含义**:
+```
+Persona = Agent 角色配置
+  ├─ 名称（如 Poe, Archi）
+  ├─ 能力范围（如需求分析、架构设计）
+  ├─ 提示词模板
+  ├─ 工具集
+  └─ 对话风格
+```
+
+**为什么用 Persona**:
+- ✅ 更人性化（相比 "Agent Type"）
+- ✅ 符合行业术语（ChatGPT 也用 Custom Instructions）
+- ✅ 语义丰富：不只是功能，还包括风格和个性
+
+**示例 Persona**:
+- **Poe** (Product Owner Emulator): 需求分析 Agent
+- **Archi** (Architect): 架构设计 Agent
+- **Cody** (Code Generator): 代码生成 Agent
+
+---
+
+### 11. Slash Command（斜杠命令）
+
+**含义**: 以 `/` 开头的命令，用于强制指定 Agent 角色
+
+**示例**:
+```
+/poe 帮我分析这个需求
+/archi 设计一个微服务架构
+/cody 生成一个 REST API
+```
+
+**为什么用 Slash Command**:
+- ✅ 遵循行业惯例（Discord, Slack, Notion 都用）
+- ✅ 明确的命令语义（vs 自然语言推断）
+- ✅ 快捷输入（vs 点击下拉菜单）
+
+**技术实现**: TipTap 自定义扩展 + 正则匹配
+
+---
+
+### 12. FileWatcher（文件监听器）
+
+**含义**: 监听文件系统变化，自动更新索引
+
+**VS Code API**:
+```typescript
+const watcher = vscode.workspace.createFileSystemWatcher('**/*.md');
+watcher.onDidCreate(uri => updateIndex(uri));
+watcher.onDidChange(uri => updateIndex(uri));
+watcher.onDidDelete(uri => removeFromIndex(uri));
+```
+
+**为什么需要 FileWatcher**:
+- ✅ Spec 文档会被用户编辑
+- ✅ 索引需要实时更新
+- ✅ 避免每次搜索都重新扫描（性能问题）
+
+**性能目标**: 增量更新 < 500ms
+
+---
+
+## 🎓 术语使用建议
+
+### 对内沟通（团队内部）
+
+使用本文档定义的术语，保持一致性：
+- ✅ "SpecContextProvider 索引构建完成"
+- ❌ "Spec 提供者的那个东西弄好了"
+
+### 对外沟通（用户文档）
+
+使用更通俗的术语，减少学习成本：
+- ✅ "引用 Spec 文档"
+- ❌ "使用 SpecContextProvider 加载上下文"
+
+### 代码注释
+
+使用精确的术语，加上简短的解释：
+```typescript
+// SpecContextProvider: 扫描和索引 Spec 文档
+// 目标：启动时 < 2s，搜索 < 50ms
+const provider = new SpecContextProvider(workspaceRoot);
+```
+
+---
+
 ## 🤔 常见疑问
 
 ### Q1: 为什么要复用 Continue 的代码？
