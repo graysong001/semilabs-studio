@@ -41,6 +41,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.App = void 0;
 const react_1 = __importStar(require("react"));
 const TipTapEditor_1 = require("./TipTapEditor");
+const SlashCommandHandler_1 = require("./SlashCommandHandler");
 const App = () => {
     const [messages, setMessages] = (0, react_1.useState)([]);
     const [agent, setAgent] = (0, react_1.useState)('poe');
@@ -48,6 +49,7 @@ const App = () => {
     const [hasContent, setHasContent] = (0, react_1.useState)(false); // 追踪输入框是否有内容
     const vscodeRef = react_1.default.useRef(null);
     const editorRef = react_1.default.useRef(null); // TipTap Editor 引用
+    const slashHandlerRef = (0, react_1.useRef)(new SlashCommandHandler_1.SlashCommandHandler());
     // 保存 Context Provider 查询的 Promise resolvers
     const contextQueryResolversRef = react_1.default.useRef(new Map());
     (0, react_1.useEffect)(() => {
@@ -61,6 +63,38 @@ const App = () => {
         else {
             console.log('[App] VS Code API retrieved successfully');
         }
+        // 注册 Slash Commands
+        slashHandlerRef.current.register({
+            name: 'tasks',
+            description: '显示未完成任务列表',
+            handler: async () => {
+                console.log('[App] /tasks command executed');
+                // 发送到 Extension Host
+                if (vscodeRef.current) {
+                    vscodeRef.current.postMessage({
+                        type: 'slashCommand',
+                        command: 'tasks'
+                    });
+                }
+            }
+        });
+        slashHandlerRef.current.register({
+            name: 'help',
+            description: '显示帮助信息',
+            handler: async () => {
+                console.log('[App] /help command executed');
+                const commands = slashHandlerRef.current.getCommands();
+                const helpMessage = commands.map(cmd => `/${cmd.name} - ${cmd.description}`).join('\n');
+                // 添加帮助消息到聊天区域
+                const helpMsg = {
+                    id: Date.now().toString(),
+                    content: `Available commands:\n${helpMessage}`,
+                    isUser: false,
+                    timestamp: Date.now()
+                };
+                setMessages(prev => [...prev, helpMsg]);
+            }
+        });
         // 监听来自 Extension Host 的消息
         const messageHandler = (event) => {
             const message = event.data;
@@ -75,13 +109,51 @@ const App = () => {
                         contextQueryResolversRef.current.delete(key);
                     }
                     break;
+                case 'slashCommandResult':
+                    // 处理 Slash Command 结果
+                    if (message.result) {
+                        const resultMsg = {
+                            id: Date.now().toString(),
+                            content: message.result,
+                            isUser: false,
+                            timestamp: Date.now()
+                        };
+                        setMessages(prev => [...prev, resultMsg]);
+                        // 如果有任务数据，添加点击事件监听
+                        if (message.tasks && message.tasks.length > 0) {
+                            setTimeout(() => {
+                                document.querySelectorAll('a[data-task-path]').forEach(link => {
+                                    link.addEventListener('click', (e) => {
+                                        e.preventDefault();
+                                        const filePath = e.target.getAttribute('data-task-path');
+                                        if (filePath && vscodeRef.current) {
+                                            console.log('[App] Opening task:', filePath);
+                                            vscodeRef.current.postMessage({
+                                                type: 'openTask',
+                                                filePath
+                                            });
+                                        }
+                                    });
+                                });
+                            }, 100); // 等待DOM渲染
+                        }
+                    }
+                    break;
             }
         };
         window.addEventListener('message', messageHandler);
         return () => window.removeEventListener('message', messageHandler);
     }, []);
-    const handleSend = (0, react_1.useCallback)((content, contextItems) => {
+    const handleSend = (0, react_1.useCallback)(async (content, contextItems) => {
         console.log('[App] handleSend called:', { content, contextItems });
+        // 检测是否为 Slash Command
+        const isCommand = await slashHandlerRef.current.execute(content);
+        if (isCommand) {
+            // 如果是命令，不添加到聊天记录
+            console.log('[App] Slash command executed, not adding to messages');
+            setHasContent(false);
+            return;
+        }
         // 添加用户消息
         const userMessage = {
             id: Date.now().toString(),
@@ -188,7 +260,7 @@ const App = () => {
                             react_1.default.createElement("path", { d: "M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.235.235 0 0 1 .02-.022z" })),
                         react_1.default.createElement("span", null, "Add Context..."))),
                 react_1.default.createElement("div", { className: "input-main" },
-                    react_1.default.createElement(TipTapEditor_1.TipTapEditor, { ref: editorRef, onSend: handleSend, onContextProvider: handleContextProvider, onContentChange: (hasContent) => {
+                    react_1.default.createElement(TipTapEditor_1.TipTapEditor, { ref: editorRef, onSend: handleSend, onContextProvider: handleContextProvider, onSlashCommand: () => slashHandlerRef.current.getCommands(), onContentChange: (hasContent) => {
                             console.log('[App] Content changed:', hasContent);
                             setHasContent(hasContent);
                         }, placeholder: "Ask Semipilot or type / for commands..." })),

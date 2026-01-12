@@ -1093,7 +1093,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef3(initialValue) {
+          function useRef4(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
@@ -1887,7 +1887,7 @@
           exports.useLayoutEffect = useLayoutEffect2;
           exports.useMemo = useMemo;
           exports.useReducer = useReducer;
-          exports.useRef = useRef3;
+          exports.useRef = useRef4;
           exports.useState = useState4;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
@@ -23591,6 +23591,7 @@
 
   // src/webview/TipTapEditor.tsx
   var import_react2 = __toESM(require_react());
+  var import_react_dom2 = __toESM(require_react_dom());
 
   // node_modules/orderedmap/dist/index.js
   function OrderedMap(content) {
@@ -42859,9 +42860,9 @@ img.ProseMirror-separator {
         }
         var objectIs = typeof Object.is === "function" ? Object.is : is;
         var useSyncExternalStore = shim2.useSyncExternalStore;
-        var useRef3 = React$1.useRef, useEffect4 = React$1.useEffect, useMemo = React$1.useMemo, useDebugValue2 = React$1.useDebugValue;
+        var useRef4 = React$1.useRef, useEffect4 = React$1.useEffect, useMemo = React$1.useMemo, useDebugValue2 = React$1.useDebugValue;
         function useSyncExternalStoreWithSelector(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
-          var instRef = useRef3(null);
+          var instRef = useRef4(null);
           var inst;
           if (instRef.current === null) {
             inst = {
@@ -45855,14 +45856,92 @@ img.ProseMirror-separator {
     )) : /* @__PURE__ */ import_react2.default.createElement("div", { className: "mention-empty" }, "No results"));
   });
   MentionList.displayName = "MentionList";
+  var SlashCommandList = import_react2.default.forwardRef((props, ref) => {
+    const [selectedIndex, setSelectedIndex] = (0, import_react2.useState)(0);
+    const selectItem = (index) => {
+      const cmd = props.commands[index];
+      if (cmd) {
+        props.onSelect(cmd.name);
+      }
+    };
+    const upHandler = () => {
+      setSelectedIndex((prev) => (prev + props.commands.length - 1) % props.commands.length);
+    };
+    const downHandler = () => {
+      setSelectedIndex((prev) => (prev + 1) % props.commands.length);
+    };
+    const enterHandler = () => {
+      selectItem(selectedIndex);
+    };
+    (0, import_react2.useEffect)(() => setSelectedIndex(0), [props.commands]);
+    import_react2.default.useImperativeHandle(ref, () => ({
+      onKeyDown: ({ event }) => {
+        if (event.key === "ArrowUp") {
+          upHandler();
+          return true;
+        }
+        if (event.key === "ArrowDown") {
+          downHandler();
+          return true;
+        }
+        if (event.key === "Enter") {
+          enterHandler();
+          return true;
+        }
+        return false;
+      }
+    }));
+    return /* @__PURE__ */ import_react2.default.createElement("div", { style: {
+      backgroundColor: "var(--vscode-editorWidget-background)",
+      border: "1px solid var(--vscode-editorWidget-border)",
+      borderRadius: "4px",
+      padding: "4px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+      minWidth: "250px",
+      maxWidth: "400px",
+      maxHeight: "200px",
+      overflowY: "auto"
+    } }, props.commands.map((cmd, index) => /* @__PURE__ */ import_react2.default.createElement(
+      "div",
+      {
+        key: cmd.name,
+        style: {
+          padding: "6px 10px",
+          cursor: "pointer",
+          borderRadius: "2px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "2px",
+          backgroundColor: index === selectedIndex ? "var(--vscode-list-hoverBackground)" : "transparent"
+        },
+        onMouseEnter: () => setSelectedIndex(index),
+        onClick: () => selectItem(index)
+      },
+      /* @__PURE__ */ import_react2.default.createElement("span", { style: {
+        color: "var(--vscode-symbolIcon-methodForeground)",
+        fontWeight: "bold",
+        fontSize: "13px"
+      } }, "/", cmd.name),
+      /* @__PURE__ */ import_react2.default.createElement("span", { style: {
+        color: "var(--vscode-descriptionForeground)",
+        fontSize: "11px",
+        marginLeft: "2px"
+      } }, cmd.description)
+    )));
+  });
+  SlashCommandList.displayName = "SlashCommandList";
   var TipTapEditor = import_react2.default.forwardRef(({
     onSend,
     onContextProvider,
+    onSlashCommand,
     onContentChange,
     placeholder = "Ask Semipilot or type / for commands..."
   }, ref) => {
     const [contextItems, setContextItems] = (0, import_react2.useState)([]);
+    const [showSlashMenu, setShowSlashMenu] = (0, import_react2.useState)(false);
     const tippyInstanceRef = (0, import_react2.useRef)(null);
+    const slashMenuRef = (0, import_react2.useRef)(null);
+    const slashTippyRef = (0, import_react2.useRef)(null);
     const editor = useEditor({
       extensions: [
         StarterKit,
@@ -45956,39 +46035,229 @@ img.ProseMirror-separator {
         setContextItems(mentions);
         const hasContent = editor2.getText().trim().length > 0;
         onContentChange?.(hasContent);
+        const text = editor2.getText();
+        console.log("[TipTapEditor] onUpdate, text:", JSON.stringify(text), "onSlashCommand:", !!onSlashCommand);
+        const trimmedText = text.trim();
+        if (trimmedText.startsWith("/") && onSlashCommand) {
+          const commandPrefix = trimmedText.slice(1);
+          if (commandPrefix.length === 0 || commandPrefix.length > 0) {
+            console.log("[TipTapEditor] Showing slash menu for prefix:", commandPrefix);
+            setShowSlashMenu(true);
+            const allCommands = onSlashCommand();
+            const filteredCommands = commandPrefix.length === 0 ? allCommands : allCommands.filter((cmd) => cmd.name.toLowerCase().startsWith(commandPrefix.toLowerCase()));
+            console.log("[TipTapEditor] Filtered commands:", filteredCommands.length, "of", allCommands.length);
+            if (filteredCommands.length === 0) {
+              if (slashTippyRef.current) {
+                slashTippyRef.current.destroy();
+                slashTippyRef.current = null;
+              }
+              setShowSlashMenu(false);
+              return;
+            }
+            if (!slashTippyRef.current && editor2.view.dom) {
+              const menuContainer = document.createElement("div");
+              const handleSelect = (commandName) => {
+                editor2.commands.clearContent();
+                editor2.commands.insertContent(`/${commandName}`);
+                setShowSlashMenu(false);
+                if (slashTippyRef.current) {
+                  slashTippyRef.current.destroy();
+                  slashTippyRef.current = null;
+                }
+              };
+              const renderMenu = () => {
+                const element = import_react2.default.createElement(SlashCommandList, {
+                  commands: filteredCommands,
+                  onSelect: handleSelect,
+                  ref: slashMenuRef
+                });
+                const root = document.createElement("div");
+                import_react_dom2.default.render(element, root);
+                menuContainer.appendChild(root.firstChild);
+              };
+              renderMenu();
+              const getCursorCoords = () => {
+                const { from: from2 } = editor2.state.selection;
+                const coords = editor2.view.coordsAtPos(from2);
+                return {
+                  top: coords.top,
+                  left: coords.left,
+                  bottom: coords.bottom,
+                  right: coords.right,
+                  width: 0,
+                  height: coords.bottom - coords.top,
+                  x: coords.left,
+                  y: coords.top,
+                  toJSON: () => ({})
+                };
+              };
+              slashTippyRef.current = tippy_esm_default(document.body, {
+                getReferenceClientRect: getCursorCoords,
+                appendTo: () => document.body,
+                content: menuContainer,
+                showOnCreate: true,
+                interactive: true,
+                trigger: "manual",
+                placement: "bottom-start",
+                maxWidth: "none"
+              });
+            } else if (slashTippyRef.current) {
+              const menuContainer = document.createElement("div");
+              const handleSelect = (commandName) => {
+                editor2.commands.clearContent();
+                editor2.commands.insertContent(`/${commandName}`);
+                setShowSlashMenu(false);
+                if (slashTippyRef.current) {
+                  slashTippyRef.current.destroy();
+                  slashTippyRef.current = null;
+                }
+              };
+              const renderMenu = () => {
+                const element = import_react2.default.createElement(SlashCommandList, {
+                  commands: filteredCommands,
+                  onSelect: handleSelect,
+                  ref: slashMenuRef
+                });
+                const root = document.createElement("div");
+                import_react_dom2.default.render(element, root);
+                menuContainer.appendChild(root.firstChild);
+              };
+              renderMenu();
+              slashTippyRef.current.setContent(menuContainer);
+            }
+          }
+        } else {
+          setShowSlashMenu(false);
+          if (slashTippyRef.current) {
+            slashTippyRef.current.destroy();
+            slashTippyRef.current = null;
+          }
+        }
       }
     });
     const handleSend = (0, import_react2.useCallback)(() => {
       if (!editor) return;
-      const content = editor.getText();
-      if (content.trim()) {
+      const content = editor.getText().trim();
+      if (content) {
         onSend(content, contextItems);
         editor.commands.clearContent();
         setContextItems([]);
+        setShowSlashMenu(false);
       }
     }, [editor, contextItems, onSend]);
     (0, import_react2.useEffect)(() => {
       if (!editor) return;
       const handleKeyDown2 = (event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
+        console.log("[TipTapEditor] KeyDown:", {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          shiftKey: event.shiftKey
+        });
+        if (showSlashMenu && slashMenuRef.current) {
+          const handled = slashMenuRef.current.onKeyDown?.({ event });
+          if (handled) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+        }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
+          event.stopPropagation();
+          console.log("[TipTapEditor] Mod+Enter pressed, sending...");
+          handleSend();
+          return;
+        }
+        if (event.key === "Enter" && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
           if (tippyInstanceRef.current?.state.isVisible) {
             return;
           }
+          event.preventDefault();
+          event.stopPropagation();
+          console.log("[TipTapEditor] Enter pressed, sending...");
           handleSend();
         }
       };
-      editor.view.dom.addEventListener("keydown", handleKeyDown2);
+      editor.view.dom.addEventListener("keydown", handleKeyDown2, true);
       return () => {
-        editor.view.dom.removeEventListener("keydown", handleKeyDown2);
+        editor.view.dom.removeEventListener("keydown", handleKeyDown2, true);
       };
-    }, [editor, handleSend]);
+    }, [editor, handleSend, showSlashMenu]);
     import_react2.default.useImperativeHandle(ref, () => ({
       send: handleSend,
       hasContent: () => !!editor && editor.getText().trim().length > 0
     }));
-    return /* @__PURE__ */ import_react2.default.createElement("div", { className: "tiptap-editor-wrapper" }, /* @__PURE__ */ import_react2.default.createElement(EditorContent, { editor, className: "tiptap-editor-content" }));
+    return /* @__PURE__ */ import_react2.default.createElement("div", { className: "tiptap-editor-wrapper", style: { position: "relative" } }, /* @__PURE__ */ import_react2.default.createElement(EditorContent, { editor, className: "tiptap-editor-content" }));
   });
+
+  // src/webview/SlashCommandHandler.ts
+  var SlashCommandHandler = class {
+    constructor() {
+      this.commands = /* @__PURE__ */ new Map();
+    }
+    /**
+     * 注册 Slash Command
+     */
+    register(command2) {
+      this.commands.set(command2.name, command2);
+      console.log(`[SlashCommandHandler] Registered command: /${command2.name}`);
+    }
+    /**
+     * 检测输入是否为 Slash Command
+     * @param input 用户输入
+     * @returns 如果是命令，返回 { command, args }，否则返回 null
+     */
+    parse(input) {
+      const trimmed = input.trim();
+      if (!trimmed.startsWith("/")) {
+        return null;
+      }
+      const parts = trimmed.slice(1).split(/\s+/);
+      const command2 = parts[0];
+      const args = parts.slice(1).join(" ");
+      if (!this.commands.has(command2)) {
+        return null;
+      }
+      return {
+        command: command2,
+        args: args || void 0
+      };
+    }
+    /**
+     * 执行 Slash Command
+     */
+    async execute(input) {
+      const parsed = this.parse(input);
+      if (!parsed) {
+        return false;
+      }
+      const command2 = this.commands.get(parsed.command);
+      if (!command2) {
+        return false;
+      }
+      console.log(`[SlashCommandHandler] Executing: /${parsed.command}`, parsed.args);
+      try {
+        await command2.handler(parsed.args);
+        return true;
+      } catch (error) {
+        console.error(`[SlashCommandHandler] Error executing /${parsed.command}:`, error);
+        return false;
+      }
+    }
+    /**
+     * 获取所有已注册的命令
+     */
+    getCommands() {
+      return Array.from(this.commands.values());
+    }
+    /**
+     * 检查命令是否存在
+     */
+    hasCommand(name) {
+      return this.commands.has(name);
+    }
+  };
 
   // src/webview/App.tsx
   var App = () => {
@@ -45998,6 +46267,7 @@ img.ProseMirror-separator {
     const [hasContent, setHasContent] = (0, import_react5.useState)(false);
     const vscodeRef = import_react5.default.useRef(null);
     const editorRef = import_react5.default.useRef(null);
+    const slashHandlerRef = (0, import_react5.useRef)(new SlashCommandHandler());
     const contextQueryResolversRef = import_react5.default.useRef(/* @__PURE__ */ new Map());
     (0, import_react5.useEffect)(() => {
       console.log("[App] Retrieving VS Code API from window.__vscodeApi");
@@ -46007,6 +46277,38 @@ img.ProseMirror-separator {
       } else {
         console.log("[App] VS Code API retrieved successfully");
       }
+      slashHandlerRef.current.register({
+        name: "tasks",
+        description: "\u663E\u793A\u672A\u5B8C\u6210\u4EFB\u52A1\u5217\u8868",
+        handler: async () => {
+          console.log("[App] /tasks command executed");
+          if (vscodeRef.current) {
+            vscodeRef.current.postMessage({
+              type: "slashCommand",
+              command: "tasks"
+            });
+          }
+        }
+      });
+      slashHandlerRef.current.register({
+        name: "help",
+        description: "\u663E\u793A\u5E2E\u52A9\u4FE1\u606F",
+        handler: async () => {
+          console.log("[App] /help command executed");
+          const commands2 = slashHandlerRef.current.getCommands();
+          const helpMessage = commands2.map(
+            (cmd) => `/${cmd.name} - ${cmd.description}`
+          ).join("\n");
+          const helpMsg = {
+            id: Date.now().toString(),
+            content: `Available commands:
+${helpMessage}`,
+            isUser: false,
+            timestamp: Date.now()
+          };
+          setMessages((prev) => [...prev, helpMsg]);
+        }
+      });
       const messageHandler = (event) => {
         const message = event.data;
         console.log("[App] Message received from Extension Host:", message);
@@ -46019,13 +46321,47 @@ img.ProseMirror-separator {
               contextQueryResolversRef.current.delete(key);
             }
             break;
+          case "slashCommandResult":
+            if (message.result) {
+              const resultMsg = {
+                id: Date.now().toString(),
+                content: message.result,
+                isUser: false,
+                timestamp: Date.now()
+              };
+              setMessages((prev) => [...prev, resultMsg]);
+              if (message.tasks && message.tasks.length > 0) {
+                setTimeout(() => {
+                  document.querySelectorAll("a[data-task-path]").forEach((link) => {
+                    link.addEventListener("click", (e) => {
+                      e.preventDefault();
+                      const filePath = e.target.getAttribute("data-task-path");
+                      if (filePath && vscodeRef.current) {
+                        console.log("[App] Opening task:", filePath);
+                        vscodeRef.current.postMessage({
+                          type: "openTask",
+                          filePath
+                        });
+                      }
+                    });
+                  });
+                }, 100);
+              }
+            }
+            break;
         }
       };
       window.addEventListener("message", messageHandler);
       return () => window.removeEventListener("message", messageHandler);
     }, []);
-    const handleSend = (0, import_react5.useCallback)((content, contextItems) => {
+    const handleSend = (0, import_react5.useCallback)(async (content, contextItems) => {
       console.log("[App] handleSend called:", { content, contextItems });
+      const isCommand = await slashHandlerRef.current.execute(content);
+      if (isCommand) {
+        console.log("[App] Slash command executed, not adding to messages");
+        setHasContent(false);
+        return;
+      }
       const userMessage = {
         id: Date.now().toString(),
         content,
@@ -46094,6 +46430,7 @@ img.ProseMirror-separator {
         ref: editorRef,
         onSend: handleSend,
         onContextProvider: handleContextProvider,
+        onSlashCommand: () => slashHandlerRef.current.getCommands(),
         onContentChange: (hasContent2) => {
           console.log("[App] Content changed:", hasContent2);
           setHasContent(hasContent2);

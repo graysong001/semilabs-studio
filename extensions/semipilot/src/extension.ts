@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { SseMessenger } from './messenger/SseMessenger';
 import { SemipilotWebviewProvider } from './webview/SemipilotWebviewProvider';
 import { ContextProviderManager } from './context/ContextProviderManager';
+import { registerTaskCommands } from './commands/taskCommands';
 
 let messenger: SseMessenger;
 let contextManager: ContextProviderManager;
@@ -56,6 +57,9 @@ export function activate(context: vscode.ExtensionContext) {
       webviewProvider
     )
   );
+  
+  // Register task commands
+  registerTaskCommands(context);
   
   // Register command: Open Chat
   const openChatCommand = vscode.commands.registerCommand('semipilot.openChat', async () => {

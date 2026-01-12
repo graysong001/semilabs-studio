@@ -4,8 +4,9 @@
  * Semipilot Chat Panel Main App Component
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TipTapEditor, TipTapEditorRef } from './TipTapEditor';
+import { SlashCommandHandler } from './SlashCommandHandler';
 
 interface Message {
   id: string;
@@ -28,6 +29,7 @@ export const App: React.FC = () => {
   const [hasContent, setHasContent] = useState(false); // 追踪输入框是否有内容
   const vscodeRef = React.useRef<VsCodeApi | null>(null);
   const editorRef = React.useRef<TipTapEditorRef>(null); // TipTap Editor 引用
+  const slashHandlerRef = useRef<SlashCommandHandler>(new SlashCommandHandler());
   
   // 保存 Context Provider 查询的 Promise resolvers
   const contextQueryResolversRef = React.useRef<Map<string, (results: ContextItem[]) => void>>(new Map());
@@ -44,6 +46,43 @@ export const App: React.FC = () => {
       console.log('[App] VS Code API retrieved successfully');
     }
     
+    // 注册 Slash Commands
+    slashHandlerRef.current.register({
+      name: 'tasks',
+      description: '显示未完成任务列表',
+      handler: async () => {
+        console.log('[App] /tasks command executed');
+        // 发送到 Extension Host
+        if (vscodeRef.current) {
+          vscodeRef.current.postMessage({
+            type: 'slashCommand',
+            command: 'tasks'
+          });
+        }
+      }
+    });
+    
+    slashHandlerRef.current.register({
+      name: 'help',
+      description: '显示帮助信息',
+      handler: async () => {
+        console.log('[App] /help command executed');
+        const commands = slashHandlerRef.current.getCommands();
+        const helpMessage = commands.map(cmd => 
+          `/${cmd.name} - ${cmd.description}`
+        ).join('\n');
+        
+        // 添加帮助消息到聊天区域
+        const helpMsg: Message = {
+          id: Date.now().toString(),
+          content: `Available commands:\n${helpMessage}`,
+          isUser: false,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, helpMsg]);
+      }
+    });
+    
     // 监听来自 Extension Host 的消息
     const messageHandler = (event: MessageEvent) => {
       const message = event.data;
@@ -59,6 +98,37 @@ export const App: React.FC = () => {
             contextQueryResolversRef.current.delete(key);
           }
           break;
+        case 'slashCommandResult':
+          // 处理 Slash Command 结果
+          if (message.result) {
+            const resultMsg: Message = {
+              id: Date.now().toString(),
+              content: message.result,
+              isUser: false,
+              timestamp: Date.now()
+            };
+            setMessages(prev => [...prev, resultMsg]);
+            
+            // 如果有任务数据，添加点击事件监听
+            if (message.tasks && message.tasks.length > 0) {
+              setTimeout(() => {
+                document.querySelectorAll('a[data-task-path]').forEach(link => {
+                  link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const filePath = (e.target as HTMLElement).getAttribute('data-task-path');
+                    if (filePath && vscodeRef.current) {
+                      console.log('[App] Opening task:', filePath);
+                      vscodeRef.current.postMessage({
+                        type: 'openTask',
+                        filePath
+                      });
+                    }
+                  });
+                });
+              }, 100);  // 等待DOM渲染
+            }
+          }
+          break;
       }
     };
     
@@ -66,8 +136,18 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('message', messageHandler);
   }, []);
 
-  const handleSend = useCallback((content: string, contextItems: ContextItem[]) => {
+  const handleSend = useCallback(async (content: string, contextItems: ContextItem[]) => {
     console.log('[App] handleSend called:', { content, contextItems });
+    
+    // 检测是否为 Slash Command
+    const isCommand = await slashHandlerRef.current.execute(content);
+    
+    if (isCommand) {
+      // 如果是命令，不添加到聊天记录
+      console.log('[App] Slash command executed, not adding to messages');
+      setHasContent(false);
+      return;
+    }
     
     // 添加用户消息
     const userMessage: Message = {
@@ -226,10 +306,11 @@ export const App: React.FC = () => {
           
           {/* 中间：TipTap Editor（移除 @ 符号） */}
           <div className="input-main">
-            <TipTapEditor 
+            <TipTapEditor
               ref={editorRef}
               onSend={handleSend}
               onContextProvider={handleContextProvider}
+              onSlashCommand={() => slashHandlerRef.current.getCommands()}
               onContentChange={(hasContent) => {
                 console.log('[App] Content changed:', hasContent);
                 setHasContent(hasContent);

@@ -44,6 +44,7 @@ const vscode = __importStar(require("vscode"));
 const SseMessenger_1 = require("./messenger/SseMessenger");
 const SemipilotWebviewProvider_1 = require("./webview/SemipilotWebviewProvider");
 const ContextProviderManager_1 = require("./context/ContextProviderManager");
+const taskCommands_1 = require("./commands/taskCommands");
 let messenger;
 let contextManager;
 function activate(context) {
@@ -77,6 +78,8 @@ function activate(context) {
     const webviewProvider = new SemipilotWebviewProvider_1.SemipilotWebviewProvider(context.extensionUri, context, contextManager // 传递 contextManager
     );
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(SemipilotWebviewProvider_1.SemipilotWebviewProvider.viewType, webviewProvider));
+    // Register task commands
+    (0, taskCommands_1.registerTaskCommands)(context);
     // Register command: Open Chat
     const openChatCommand = vscode.commands.registerCommand('semipilot.openChat', async () => {
         // The webview will be shown automatically when command is triggered

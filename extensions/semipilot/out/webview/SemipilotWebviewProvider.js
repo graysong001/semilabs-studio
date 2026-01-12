@@ -45,12 +45,18 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SemipilotWebviewProvider = void 0;
 const vscode = __importStar(require("vscode"));
+const TaskContextProvider_1 = require("../context/TaskContextProvider");
 class SemipilotWebviewProvider {
     constructor(_extensionUri, _extensionContext, _contextManager // 可选，因为可能没有工作区
     ) {
         this._extensionUri = _extensionUri;
         this._extensionContext = _extensionContext;
         this._contextManager = _contextManager;
+        // 初始化TaskContextProvider
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (workspaceRoot) {
+            this._taskProvider = new TaskContextProvider_1.TaskContextProvider(workspaceRoot);
+        }
     }
     resolveWebviewView(webviewView, context, _token) {
         console.log('[SemipilotWebviewProvider] resolveWebviewView called');
@@ -82,6 +88,12 @@ class SemipilotWebviewProvider {
                     break;
                 case 'contextProvider':
                     this._handleContextProvider(data.providerId, data.query);
+                    break;
+                case 'slashCommand':
+                    this._handleSlashCommand(data.command, data.args);
+                    break;
+                case 'openTask':
+                    this._handleOpenTask(data.filePath);
                     break;
                 case 'newChat':
                     console.log('[SemipilotWebviewProvider] New chat requested');
@@ -223,6 +235,113 @@ class SemipilotWebviewProvider {
                 results: [],
                 error: error instanceof Error ? error.message : String(error)
             });
+        }
+    }
+    async _handleSlashCommand(command, args) {
+        console.log('[SemipilotWebviewProvider] Slash command:', command, args);
+        switch (command) {
+            case 'tasks':
+                await this._handleTasksCommand();
+                break;
+            default:
+                console.warn(`[SemipilotWebviewProvider] Unknown command: ${command}`);
+        }
+    }
+    async _handleTasksCommand() {
+        console.log('[SemipilotWebviewProvider] Executing /tasks command');
+        // 获取工作区根目录
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspaceRoot) {
+            this._view?.webview.postMessage({
+                type: 'slashCommandResult',
+                result: '💡 提示：未检测到任务目录\n\n这可能是一个新工作区，还未创建任务。\n使用 Poe 创建第一个任务吧！'
+            });
+            return;
+        }
+        if (!this._taskProvider) {
+            console.error('[SemipilotWebviewProvider] TaskContextProvider not initialized');
+            return;
+        }
+        try {
+            // 扫描并解析任务
+            const tasks = await this._taskProvider.scanTasks();
+            console.log(`[SemipilotWebviewProvider] Parsed ${tasks.length} tasks`);
+            if (tasks.length === 0) {
+                this._view?.webview.postMessage({
+                    type: 'slashCommandResult',
+                    result: '🎉 所有任务已完成！\n\n可以创建新任务或回顾已完成工作'
+                });
+                return;
+            }
+            // 排序任务
+            const sortedTasks = this._taskProvider.sortTasks(tasks);
+            // 生成任务列表卡片
+            const taskItems = sortedTasks.map(task => {
+                const priorityIcon = this.getPriorityIcon(task.priority);
+                const statusText = this.getStatusText(task.status);
+                const progressText = task.currentProgress ? ` - ${task.currentProgress}` : '';
+                const blockedText = task.blockedTasks && task.blockedTasks.length > 0
+                    ? ` | 阻塞${task.blockedTasks.length}个`
+                    : '';
+                return `  ${priorityIcon} <a href="#" data-task-path="${task.filePath}">${task.taskId}</a> [${statusText}]${progressText}${blockedText} (score: ${task.score})`;
+            }).join('\n');
+            const result = `📋 未完成任务 (${sortedTasks.length}个)
+
+${taskItems}
+
+提示：点击任务ID查看详情`;
+            // 发送任务数据（用于点击处理）
+            this._view?.webview.postMessage({
+                type: 'slashCommandResult',
+                result,
+                tasks: sortedTasks.map(t => ({
+                    taskId: t.taskId,
+                    filePath: t.filePath
+                }))
+            });
+        }
+        catch (error) {
+            console.error('[SemipilotWebviewProvider] Error executing /tasks:', error);
+            this._view?.webview.postMessage({
+                type: 'slashCommandResult',
+                result: `❌ 错误：${error instanceof Error ? error.message : String(error)}`
+            });
+        }
+    }
+    async _handleOpenTask(filePath) {
+        console.log('[SemipilotWebviewProvider] Opening task:', filePath);
+        try {
+            // 调用VS Code命令打开文档
+            await vscode.commands.executeCommand('semilabs.openTaskDocument', filePath);
+        }
+        catch (error) {
+            console.error('[SemipilotWebviewProvider] Error opening task:', error);
+        }
+    }
+    getPriorityIcon(priority) {
+        switch (priority) {
+            case TaskContextProvider_1.Priority.HIGH:
+                return '🔴';
+            case TaskContextProvider_1.Priority.MEDIUM:
+                return '🟡';
+            case TaskContextProvider_1.Priority.LOW:
+                return '🟢';
+            default:
+                return '⚪';
+        }
+    }
+    getStatusText(status) {
+        switch (status) {
+            case TaskContextProvider_1.TaskStatus.IN_PROGRESS:
+                return 'IN_PROGRESS';
+            case TaskContextProvider_1.TaskStatus.PAUSED:
+                return 'PAUSED';
+            case TaskContextProvider_1.TaskStatus.PENDING:
+                return 'PENDING';
+            case TaskContextProvider_1.TaskStatus.COMPLETED:
+                return 'COMPLETED';
+            default:
+                return 'UNKNOWN';
         }
     }
     _getNonce() {
