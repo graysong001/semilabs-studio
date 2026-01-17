@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "compile",
+      "path": "extensions/semipilot/",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$tsc",
+      "label": "npm: compile - extensions/semipilot",
+      "detail": "tsc -p ./"
+    },
+    {
+      "type": "npm",
+      "script": "watch",
+      "path": "extensions/semipilot/",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "label": "npm: watch - extensions/semipilot",
+      "detail": "tsc -watch -p ./"
+    }
+  ]
+}

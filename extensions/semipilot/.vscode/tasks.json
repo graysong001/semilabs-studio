@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "compile",
+      "group": "build",
+      "problemMatcher": "$tsc",
+      "label": "npm: compile",
+      "detail": "tsc -p ./"
+    },
+    {
+      "type": "npm",
+      "script": "compile:webview",
+      "problemMatcher": [],
+      "label": "npm: compile:webview",
+      "detail": "node esbuild.js"
+    },
+    {
+      "label": "compile-all",
+      "dependsOn": [
+        "npm: compile",
+        "npm: compile:webview"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

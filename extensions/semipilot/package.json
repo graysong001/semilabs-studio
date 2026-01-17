@@ -1,0 +1,92 @@
+{
+  "name": "semipilot",
+  "displayName": "Semipilot",
+  "description": "AI-Native Software Engineering - Spec-Driven Agent Squad",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "semipilot",
+          "title": "Semipilot",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "views": {
+      "semipilot": [
+        {
+          "type": "webview",
+          "id": "semipilot.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "semipilot.openChat",
+        "title": "Semipilot: Open Chat"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run compile:webview",
+    "compile": "tsc -p ./",
+    "compile:webview": "node esbuild.js",
+    "watch": "tsc -watch -p ./",
+    "watch:webview": "node esbuild.js --watch",
+    "test": "node ./out/test/runTest.js",
+    "test:backend": "npm run compile && npx mocha out/test/backend-integration.test.js --timeout 60000",
+    "test:auto": "node test/automated/full-coverage-test.js",
+    "test:slash": "node verify-slash.js",
+    "test:all": "npm run compile && npm run test:auto && npm run test:slash"
+  },
+  "devDependencies": {
+    "@types/eventsource": "^1.1.15",
+    "@types/glob": "^8.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.19.28",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@types/uuid": "^10.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.2",
+    "glob": "^13.0.0",
+    "jest": "^30.2.0",
+    "mocha": "^11.7.5",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@tiptap/core": "^2.27.0",
+    "@tiptap/extension-document": "^2.27.0",
+    "@tiptap/extension-dropcursor": "^2.27.0",
+    "@tiptap/extension-history": "^2.27.1",
+    "@tiptap/extension-image": "^2.27.1",
+    "@tiptap/extension-mention": "^2.1.13",
+    "@tiptap/extension-paragraph": "^2.3.2",
+    "@tiptap/extension-placeholder": "^2.1.13",
+    "@tiptap/extension-text": "^2.3.2",
+    "@tiptap/pm": "^2.1.13",
+    "@tiptap/react": "^2.1.13",
+    "@tiptap/starter-kit": "^2.1.13",
+    "@tiptap/suggestion": "^2.1.13",
+    "eventsource": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tippy.js": "^6.3.7",
+    "uuid": "^9.0.0"
+  }
+}

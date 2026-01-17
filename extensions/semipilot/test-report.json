@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-09T07:25:19.224Z",
+  "name": "semipilot",
+  "version": "0.1.0",
+  "checks": {
+    "mainEntry": true,
+    "webviewView": true,
+    "command": true
+  },
+  "files": {
+    "extensionJs": true,
+    "webviewProvider": true,
+    "specProvider": true
+  }
+}
