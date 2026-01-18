@@ -60,20 +60,15 @@ const App = () => {
     (0, react_1.useEffect)(() => {
         // 从 window.__vscodeApi 获取已保存的 VS Code API 实例
         // ⚠️ 不要调用 acquireVsCodeApi()，它只能调用一次（在 index.tsx 中已调用）
-        console.log('[App] Retrieving VS Code API from window.__vscodeApi');
         vscodeRef.current = window.__vscodeApi || null;
         if (!vscodeRef.current) {
             console.error('[App] VS Code API not found on window.__vscodeApi');
-        }
-        else {
-            console.log('[App] VS Code API retrieved successfully');
         }
         // 注册 Slash Commands
         slashHandlerRef.current.register({
             name: 'tasks',
             description: '显示未完成任务列表',
             handler: async () => {
-                console.log('[App] /tasks command executed');
                 // 发送到 Extension Host
                 if (vscodeRef.current) {
                     vscodeRef.current.postMessage({
@@ -87,7 +82,6 @@ const App = () => {
             name: 'help',
             description: '显示帮助信息',
             handler: async () => {
-                console.log('[App] /help command executed');
                 const commands = slashHandlerRef.current.getCommands();
                 const helpMessage = commands.map(cmd => `/${cmd.name} - ${cmd.description}`).join('\n');
                 // 添加帮助消息到聊天区域
@@ -103,17 +97,15 @@ const App = () => {
         // 监听来自 Extension Host 的消息
         const messageHandler = (event) => {
             const message = event.data;
-            console.log('[App] Message received from Extension Host:', message);
             switch (message.type) {
                 case 'assistantMessage':
                     // 🐛 修复：如果用户已点击停止，忽略Backend返回的响应
                     if (isStopped) {
-                        console.log('[App] ⚠️ User stopped generation, ignoring assistantMessage');
+                        console.log('[App] User stopped generation, ignoring response');
                         return;
                     }
                     // 处理Agent回复
                     setIsWaiting(false); // 收到回复，停止加载动画
-                    console.log('[App] ✅ isWaiting set to FALSE - loading animation should stop');
                     if (message.message) {
                         const assistantMsg = {
                             id: message.message.id || Date.now().toString(),
@@ -151,7 +143,6 @@ const App = () => {
                                         e.preventDefault();
                                         const filePath = e.target.getAttribute('data-task-path');
                                         if (filePath && vscodeRef.current) {
-                                            console.log('[App] Opening task:', filePath);
                                             vscodeRef.current.postMessage({
                                                 type: 'openTask',
                                                 filePath
@@ -169,12 +160,10 @@ const App = () => {
         return () => window.removeEventListener('message', messageHandler);
     }, [isStopped]); // 🐛 添加isStopped依赖
     const handleSend = (0, react_1.useCallback)(async (content, contextItems) => {
-        console.log('[App] handleSend called:', { content, contextItems });
         // 检测是否为 Slash Command
         const isCommand = await slashHandlerRef.current.execute(content);
         if (isCommand) {
             // 如果是命令，不添加到聊天记录
-            console.log('[App] Slash command executed, not adding to messages');
             setHasContent(false);
             return;
         }
@@ -189,7 +178,6 @@ const App = () => {
         };
         setMessages(prev => [...prev, userMessage]);
         setIsWaiting(true); // 开始等待AI回复
-        console.log('[App] ⭐ isWaiting set to TRUE - loading animation should start');
         // 发送到 Extension Host
         if (vscodeRef.current) {
             vscodeRef.current.postMessage({
@@ -204,7 +192,6 @@ const App = () => {
         setHasContent(false);
     }, [agent, model]);
     const handleContextProvider = (0, react_1.useCallback)(async (type, query) => {
-        console.log('[App] Context provider query:', type, query);
         if (!vscodeRef.current) {
             console.error('[App] VS Code API not available');
             return [];
@@ -248,13 +235,10 @@ const App = () => {
         }
     };
     const copyMessage = (content) => {
-        navigator.clipboard.writeText(content).then(() => {
-            console.log('Message copied');
-        });
+        navigator.clipboard.writeText(content);
     };
     // 🐛 修复问题2：停止AI生成
     const handleStop = (0, react_1.useCallback)(() => {
-        console.log('[App] Stop button clicked');
         setIsWaiting(false);
         setIsStopped(true); // 🐛 设置停止标记，拒绝后续响应
         // 发送停止请求到 Extension Host
@@ -308,10 +292,7 @@ const App = () => {
                             react_1.default.createElement("path", { d: "M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.235.235 0 0 1 .02-.022z" })),
                         react_1.default.createElement("span", null, "Add Context..."))),
                 react_1.default.createElement("div", { className: "input-main" },
-                    react_1.default.createElement(TipTapEditor_1.TipTapEditor, { ref: editorRef, onSend: handleSend, onContextProvider: handleContextProvider, onSlashCommand: () => slashHandlerRef.current.getCommands(), onContentChange: (hasContent) => {
-                            console.log('[App] Content changed:', hasContent);
-                            setHasContent(hasContent);
-                        }, placeholder: "Ask Semipilot or type / for commands..." })),
+                    react_1.default.createElement(TipTapEditor_1.TipTapEditor, { ref: editorRef, onSend: handleSend, onContextProvider: handleContextProvider, onSlashCommand: () => slashHandlerRef.current.getCommands(), onContentChange: (hasContent) => setHasContent(hasContent), placeholder: "Ask Semipilot or type / for commands..." })),
                 react_1.default.createElement("div", { className: "input-toolbar" },
                     react_1.default.createElement("div", { className: "toolbar-left" },
                         react_1.default.createElement("select", { className: "toolbar-select", value: agent, onChange: (e) => setAgent(e.target.value), title: "Select agent" },
@@ -327,10 +308,7 @@ const App = () => {
                                 react_1.default.createElement("path", { d: "M11.5 1a3.5 3.5 0 0 0-3.5 3.5V11a2 2 0 1 0 4 0V4.5a.5.5 0 0 1 1 0V11a3 3 0 1 1-6 0V4.5a4.5 4.5 0 1 1 9 0V11a5.5 5.5 0 1 1-11 0V4.5a.5.5 0 0 1 1 0V11a4.5 4.5 0 1 0 9 0V4.5A3.5 3.5 0 0 0 11.5 1z" }))),
                         isWaiting ? (react_1.default.createElement("button", { className: "toolbar-stop-btn", onClick: handleStop, title: "Stop generation" },
                             react_1.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" },
-                                react_1.default.createElement("rect", { x: "4", y: "4", width: "8", height: "8", rx: "1" })))) : (react_1.default.createElement("button", { className: "toolbar-send-btn", onClick: () => {
-                                console.log('[App] Send button clicked, hasContent:', hasContent);
-                                editorRef.current?.send();
-                            }, disabled: !hasContent, title: hasContent ? "Send message (Enter)" : "Type a message first" },
+                                react_1.default.createElement("rect", { x: "4", y: "4", width: "8", height: "8", rx: "1" })))) : (react_1.default.createElement("button", { className: "toolbar-send-btn", onClick: () => editorRef.current?.send(), disabled: !hasContent, title: hasContent ? "Send message (Enter)" : "Type a message first" },
                             react_1.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" },
                                 react_1.default.createElement("path", { d: "M15.854 7.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708L14.293 8 8.146 1.854a.5.5 0 1 1 .708-.708l7 7z" }),
                                 react_1.default.createElement("path", { d: "M0 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z" }))))))))));

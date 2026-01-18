@@ -46285,18 +46285,14 @@ img.ProseMirror-separator {
       console.log("[App] \u{1F504} Render state: isWaiting =", isWaiting, ", messages.length =", messages.length);
     }, [isWaiting, messages]);
     (0, import_react5.useEffect)(() => {
-      console.log("[App] Retrieving VS Code API from window.__vscodeApi");
       vscodeRef.current = window.__vscodeApi || null;
       if (!vscodeRef.current) {
         console.error("[App] VS Code API not found on window.__vscodeApi");
-      } else {
-        console.log("[App] VS Code API retrieved successfully");
       }
       slashHandlerRef.current.register({
         name: "tasks",
         description: "\u663E\u793A\u672A\u5B8C\u6210\u4EFB\u52A1\u5217\u8868",
         handler: async () => {
-          console.log("[App] /tasks command executed");
           if (vscodeRef.current) {
             vscodeRef.current.postMessage({
               type: "slashCommand",
@@ -46309,7 +46305,6 @@ img.ProseMirror-separator {
         name: "help",
         description: "\u663E\u793A\u5E2E\u52A9\u4FE1\u606F",
         handler: async () => {
-          console.log("[App] /help command executed");
           const commands2 = slashHandlerRef.current.getCommands();
           const helpMessage = commands2.map(
             (cmd) => `/${cmd.name} - ${cmd.description}`
@@ -46326,15 +46321,13 @@ ${helpMessage}`,
       });
       const messageHandler = (event) => {
         const message = event.data;
-        console.log("[App] Message received from Extension Host:", message);
         switch (message.type) {
           case "assistantMessage":
             if (isStopped) {
-              console.log("[App] \u26A0\uFE0F User stopped generation, ignoring assistantMessage");
+              console.log("[App] User stopped generation, ignoring response");
               return;
             }
             setIsWaiting(false);
-            console.log("[App] \u2705 isWaiting set to FALSE - loading animation should stop");
             if (message.message) {
               const assistantMsg = {
                 id: message.message.id || Date.now().toString(),
@@ -46369,7 +46362,6 @@ ${helpMessage}`,
                       e.preventDefault();
                       const filePath = e.target.getAttribute("data-task-path");
                       if (filePath && vscodeRef.current) {
-                        console.log("[App] Opening task:", filePath);
                         vscodeRef.current.postMessage({
                           type: "openTask",
                           filePath
@@ -46387,10 +46379,8 @@ ${helpMessage}`,
       return () => window.removeEventListener("message", messageHandler);
     }, [isStopped]);
     const handleSend = (0, import_react5.useCallback)(async (content, contextItems) => {
-      console.log("[App] handleSend called:", { content, contextItems });
       const isCommand = await slashHandlerRef.current.execute(content);
       if (isCommand) {
-        console.log("[App] Slash command executed, not adding to messages");
         setHasContent(false);
         return;
       }
@@ -46403,7 +46393,6 @@ ${helpMessage}`,
       };
       setMessages((prev) => [...prev, userMessage]);
       setIsWaiting(true);
-      console.log("[App] \u2B50 isWaiting set to TRUE - loading animation should start");
       if (vscodeRef.current) {
         vscodeRef.current.postMessage({
           type: "userMessage",
@@ -46416,7 +46405,6 @@ ${helpMessage}`,
       setHasContent(false);
     }, [agent2, model]);
     const handleContextProvider = (0, import_react5.useCallback)(async (type, query) => {
-      console.log("[App] Context provider query:", type, query);
       if (!vscodeRef.current) {
         console.error("[App] VS Code API not available");
         return [];
@@ -46457,12 +46445,9 @@ ${helpMessage}`,
       }
     };
     const copyMessage = (content) => {
-      navigator.clipboard.writeText(content).then(() => {
-        console.log("Message copied");
-      });
+      navigator.clipboard.writeText(content);
     };
     const handleStop = (0, import_react5.useCallback)(() => {
-      console.log("[App] Stop button clicked");
       setIsWaiting(false);
       setIsStopped(true);
       if (vscodeRef.current) {
@@ -46478,10 +46463,7 @@ ${helpMessage}`,
         onSend: handleSend,
         onContextProvider: handleContextProvider,
         onSlashCommand: () => slashHandlerRef.current.getCommands(),
-        onContentChange: (hasContent2) => {
-          console.log("[App] Content changed:", hasContent2);
-          setHasContent(hasContent2);
-        },
+        onContentChange: (hasContent2) => setHasContent(hasContent2),
         placeholder: "Ask Semipilot or type / for commands..."
       }
     )), /* @__PURE__ */ import_react5.default.createElement("div", { className: "input-toolbar" }, /* @__PURE__ */ import_react5.default.createElement("div", { className: "toolbar-left" }, /* @__PURE__ */ import_react5.default.createElement("select", { className: "toolbar-select", value: agent2, onChange: (e) => setAgent(e.target.value), title: "Select agent" }, /* @__PURE__ */ import_react5.default.createElement("option", { value: "poe" }, "Agent"), /* @__PURE__ */ import_react5.default.createElement("option", { value: "archi" }, "Agent: Archi"), /* @__PURE__ */ import_react5.default.createElement("option", { value: "cody" }, "Agent: Cody")), /* @__PURE__ */ import_react5.default.createElement("select", { className: "toolbar-select", value: model, onChange: (e) => setModel(e.target.value), title: "Select model" }, /* @__PURE__ */ import_react5.default.createElement("option", { value: "qwen" }, "Raptor mini (Preview)"), /* @__PURE__ */ import_react5.default.createElement("option", { value: "claude" }, "Claude"))), /* @__PURE__ */ import_react5.default.createElement("div", { className: "toolbar-right" }, /* @__PURE__ */ import_react5.default.createElement("button", { className: "toolbar-icon-btn", title: "Attach file" }, /* @__PURE__ */ import_react5.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react5.default.createElement("path", { d: "M11.5 1a3.5 3.5 0 0 0-3.5 3.5V11a2 2 0 1 0 4 0V4.5a.5.5 0 0 1 1 0V11a3 3 0 1 1-6 0V4.5a4.5 4.5 0 1 1 9 0V11a5.5 5.5 0 1 1-11 0V4.5a.5.5 0 0 1 1 0V11a4.5 4.5 0 1 0 9 0V4.5A3.5 3.5 0 0 0 11.5 1z" }))), isWaiting ? /* @__PURE__ */ import_react5.default.createElement(
@@ -46496,10 +46478,7 @@ ${helpMessage}`,
       "button",
       {
         className: "toolbar-send-btn",
-        onClick: () => {
-          console.log("[App] Send button clicked, hasContent:", hasContent);
-          editorRef.current?.send();
-        },
+        onClick: () => editorRef.current?.send(),
         disabled: !hasContent,
         title: hasContent ? "Send message (Enter)" : "Type a message first"
       },
@@ -46513,12 +46492,9 @@ ${helpMessage}`,
   document.head.appendChild(style2);
 
   // src/webview/index.tsx
-  console.log("[Webview] index.tsx loaded");
-  console.log("[Webview] window.acquireVsCodeApi:", typeof window.acquireVsCodeApi);
   try {
     if (typeof window.acquireVsCodeApi === "function") {
       window.__vscodeApi = window.acquireVsCodeApi();
-      console.log("[Webview] VS Code API acquired and saved to window.__vscodeApi");
       window.__vscodeApi.postMessage({
         type: "webviewReady",
         timestamp: Date.now()
@@ -46531,16 +46507,13 @@ ${helpMessage}`,
   }
   try {
     const rootElement = document.getElementById("root");
-    console.log("[Webview] Root element:", rootElement);
     if (!rootElement) {
       throw new Error("Root element not found");
     }
     const root = import_client.default.createRoot(rootElement);
-    console.log("[Webview] React root created");
     root.render(
       /* @__PURE__ */ import_react6.default.createElement(import_react6.default.StrictMode, null, /* @__PURE__ */ import_react6.default.createElement(App, null))
     );
-    console.log("[Webview] React app rendered");
   } catch (error) {
     console.error("[Webview] Error mounting React app:", error);
     const rootElement = document.getElementById("root");

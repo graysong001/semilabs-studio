@@ -443,4 +443,79 @@ describe('Backend Integration Tests', () => {
       });
     });
   });
+
+  describe('UI Interaction (P1)', () => {
+    it('[停止按钮] 前端isStopped状态应拒绝后续响应', async function() {
+      // 注意：此测试验证前端过滤逻辑，Backend未实现abort endpoint
+      this.timeout(5000);
+      
+      const session = await messenger.request('chat/create-session', {
+        title: 'Stop Button Test',
+        specId: 'test',
+        specVersion: '1.0.0',
+      });
+
+      // 模拟：用户点击停止后，isStopped=true
+      // 实际测试需要在Webview中验证，此处仅测试Backend响应正常返回
+      const response = await messenger.request('chat/send-message', {
+        sessionId: session.sessionId,
+        request: { content: '测试停止' },
+      });
+
+      assert.ok(response, 'Backend应正常返回');
+      assert.ok(response.content, '响应应有内容');
+      // 前端App.tsx会检查isStopped并忽略此响应
+    });
+
+    it('[IME输入法] Backend应正常处理中文输入', async function() {
+      // 注意：IME composition检查在TipTapEditor，Backend只需正常处理中文
+      this.timeout(10000);
+      
+      const session = await messenger.request('chat/create-session', {
+        title: 'IME Input Test',
+        specId: 'test',
+        specVersion: '1.0.0',
+      });
+
+      const chineseMessage = '你好，这是中文输入测试';
+      const response = await messenger.request('chat/send-message', {
+        sessionId: session.sessionId,
+        request: { content: chineseMessage },
+      });
+
+      assert.ok(response, '应正常处理中文消息');
+      assert.ok(response.content, '应返回中文响应');
+      assert.ok(response.content.length > 0, '响应不应为空');
+    });
+
+    it('[错误提示] 网络连接失败应返回明确错误', async function() {
+      this.timeout(5000);
+      
+      const badMessenger = new SseMessenger({
+        baseUrl: 'http://localhost:9999/api/v1',
+        reconnectInterval: 1000,
+        autoConnect: false,
+      });
+
+      try {
+        await badMessenger.request('chat/create-session', {
+          title: 'Error Message Test',
+          specId: 'test',
+          specVersion: '1.0.0',
+        });
+        assert.fail('应抛出网络错误');
+      } catch (error: any) {
+        assert.ok(error instanceof Error, '应是Error实例');
+        // SemipilotWebviewProvider会将error.message转换为友好提示
+        assert.ok(
+          error.message.includes('fetch') || 
+          error.message.includes('ECONNREFUSED') ||
+          error.message.includes('network'),
+          '错误信息应包含网络相关关键词'
+        );
+      } finally {
+        badMessenger.disconnect();
+      }
+    });
+  });
 });

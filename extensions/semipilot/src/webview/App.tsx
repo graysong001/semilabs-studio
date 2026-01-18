@@ -43,13 +43,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     // 从 window.__vscodeApi 获取已保存的 VS Code API 实例
     // ⚠️ 不要调用 acquireVsCodeApi()，它只能调用一次（在 index.tsx 中已调用）
-    console.log('[App] Retrieving VS Code API from window.__vscodeApi');
     vscodeRef.current = (window as any).__vscodeApi || null;
     
     if (!vscodeRef.current) {
       console.error('[App] VS Code API not found on window.__vscodeApi');
-    } else {
-      console.log('[App] VS Code API retrieved successfully');
     }
     
     // 注册 Slash Commands
@@ -57,7 +54,6 @@ export const App: React.FC = () => {
       name: 'tasks',
       description: '显示未完成任务列表',
       handler: async () => {
-        console.log('[App] /tasks command executed');
         // 发送到 Extension Host
         if (vscodeRef.current) {
           vscodeRef.current.postMessage({
@@ -72,7 +68,6 @@ export const App: React.FC = () => {
       name: 'help',
       description: '显示帮助信息',
       handler: async () => {
-        console.log('[App] /help command executed');
         const commands = slashHandlerRef.current.getCommands();
         const helpMessage = commands.map(cmd => 
           `/${cmd.name} - ${cmd.description}`
@@ -92,19 +87,17 @@ export const App: React.FC = () => {
     // 监听来自 Extension Host 的消息
     const messageHandler = (event: MessageEvent) => {
       const message = event.data;
-      console.log('[App] Message received from Extension Host:', message);
       
       switch (message.type) {
         case 'assistantMessage':
           // 🐛 修复：如果用户已点击停止，忽略Backend返回的响应
           if (isStopped) {
-            console.log('[App] ⚠️ User stopped generation, ignoring assistantMessage');
+            console.log('[App] User stopped generation, ignoring response');
             return;
           }
           
           // 处理Agent回复
           setIsWaiting(false); // 收到回复，停止加载动画
-          console.log('[App] ✅ isWaiting set to FALSE - loading animation should stop');
           if (message.message) {
             const assistantMsg: Message = {
               id: message.message.id || Date.now().toString(),
@@ -143,7 +136,6 @@ export const App: React.FC = () => {
                     e.preventDefault();
                     const filePath = (e.target as HTMLElement).getAttribute('data-task-path');
                     if (filePath && vscodeRef.current) {
-                      console.log('[App] Opening task:', filePath);
                       vscodeRef.current.postMessage({
                         type: 'openTask',
                         filePath
@@ -163,14 +155,11 @@ export const App: React.FC = () => {
   }, [isStopped]); // 🐛 添加isStopped依赖
 
   const handleSend = useCallback(async (content: string, contextItems: ContextItem[]) => {
-    console.log('[App] handleSend called:', { content, contextItems });
-    
     // 检测是否为 Slash Command
     const isCommand = await slashHandlerRef.current.execute(content);
     
     if (isCommand) {
       // 如果是命令，不添加到聊天记录
-      console.log('[App] Slash command executed, not adding to messages');
       setHasContent(false);
       return;
     }
@@ -187,7 +176,6 @@ export const App: React.FC = () => {
     };
     setMessages(prev => [...prev, userMessage]);
     setIsWaiting(true); // 开始等待AI回复
-    console.log('[App] ⭐ isWaiting set to TRUE - loading animation should start');
 
     // 发送到 Extension Host
     if (vscodeRef.current) {
@@ -205,8 +193,6 @@ export const App: React.FC = () => {
   }, [agent, model]);
 
   const handleContextProvider = useCallback(async (type: string, query: string): Promise<ContextItem[]> => {
-    console.log('[App] Context provider query:', type, query);
-    
     if (!vscodeRef.current) {
       console.error('[App] VS Code API not available');
       return [];
@@ -257,14 +243,11 @@ export const App: React.FC = () => {
   };
 
   const copyMessage = (content: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      console.log('Message copied');
-    });
+    navigator.clipboard.writeText(content);
   };
 
   // 🐛 修复问题2：停止AI生成
   const handleStop = useCallback(() => {
-    console.log('[App] Stop button clicked');
     setIsWaiting(false);
     setIsStopped(true); // 🐛 设置停止标记，拒绝后续响应
     
@@ -370,10 +353,7 @@ export const App: React.FC = () => {
               onSend={handleSend}
               onContextProvider={handleContextProvider}
               onSlashCommand={() => slashHandlerRef.current.getCommands()}
-              onContentChange={(hasContent) => {
-                console.log('[App] Content changed:', hasContent);
-                setHasContent(hasContent);
-              }}
+              onContentChange={(hasContent) => setHasContent(hasContent)}
               placeholder="Ask Semipilot or type / for commands..."
             />
           </div>
@@ -412,10 +392,7 @@ export const App: React.FC = () => {
               ) : (
                 <button 
                   className="toolbar-send-btn" 
-                  onClick={() => {
-                    console.log('[App] Send button clicked, hasContent:', hasContent);
-                    editorRef.current?.send();
-                  }}
+                  onClick={() => editorRef.current?.send()}
                   disabled={!hasContent}
                   title={hasContent ? "Send message (Enter)" : "Type a message first"}
                 >
