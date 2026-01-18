@@ -227,12 +227,38 @@ class SemipilotWebviewProvider {
         }
         catch (error) {
             console.error('[SemipilotWebviewProvider] Error sending message:', error);
+            // 优化错误消息，提供更明确的描述
+            let errorMessage = '未知错误';
+            if (error instanceof Error) {
+                // 网络连接错误
+                if (error.message.includes('fetch failed') ||
+                    error.message.includes('ECONNREFUSED') ||
+                    error.message.includes('network') ||
+                    error.message.includes('timeout')) {
+                    errorMessage = '网络连接失败，请确认Backend服务是否启动（http://localhost:8080）';
+                }
+                // API错误
+                else if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    errorMessage = 'API接口不存在，请检查Backend版本';
+                }
+                // 超时错误
+                else if (error.message.includes('timeout')) {
+                    errorMessage = '请求超时，AI响应时间过长，请稍后重试';
+                }
+                // 其他错误
+                else {
+                    errorMessage = error.message;
+                }
+            }
+            else {
+                errorMessage = String(error);
+            }
             // 发送错误消息给Webview
             this._view?.webview.postMessage({
                 type: 'assistantMessage',
                 message: {
                     id: Date.now().toString(),
-                    content: `❗ 错误：${error instanceof Error ? error.message : String(error)}`,
+                    content: `❗ ${errorMessage}`,
                     isUser: false,
                     timestamp: Date.now(),
                     persona: 'system',
