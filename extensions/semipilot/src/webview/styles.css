@@ -436,6 +436,32 @@ body {
   height: 14px;
 }
 
+/* 🐛 修复问题2：停止按钮样式 */
+.toolbar-stop-btn {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 4px;
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+.toolbar-stop-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.toolbar-stop-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* 加载动画（GitHub Copilot风格） */
 .loading-message {
   background: transparent;

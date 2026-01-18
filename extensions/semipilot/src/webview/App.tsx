@@ -251,6 +251,19 @@ export const App: React.FC = () => {
     });
   };
 
+  // 🐛 修复问题2：停止AI生成
+  const handleStop = useCallback(() => {
+    console.log('[App] Stop button clicked');
+    setIsWaiting(false);
+    
+    // 发送停止请求到 Extension Host
+    if (vscodeRef.current) {
+      vscodeRef.current.postMessage({
+        type: 'stopGeneration'
+      });
+    }
+  }, []);
+
   return (
     <div className="app-container">
       {/* 顶部标题栏 */}
@@ -373,21 +386,33 @@ export const App: React.FC = () => {
                   <path d="M11.5 1a3.5 3.5 0 0 0-3.5 3.5V11a2 2 0 1 0 4 0V4.5a.5.5 0 0 1 1 0V11a3 3 0 1 1-6 0V4.5a4.5 4.5 0 1 1 9 0V11a5.5 5.5 0 1 1-11 0V4.5a.5.5 0 0 1 1 0V11a4.5 4.5 0 1 0 9 0V4.5A3.5 3.5 0 0 0 11.5 1z"/>
                 </svg>
               </button>
-              {/* 发送按钮 */}
-              <button 
-                className="toolbar-send-btn" 
-                onClick={() => {
-                  console.log('[App] Send button clicked, hasContent:', hasContent);
-                  editorRef.current?.send();
-                }}
-                disabled={!hasContent}
-                title={hasContent ? "Send message (Enter)" : "Type a message first"}
-              >
-                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                  <path d="M15.854 7.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708L14.293 8 8.146 1.854a.5.5 0 1 1 .708-.708l7 7z"/>
-                  <path d="M0 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z"/>
-                </svg>
-              </button>
+              {/* 🐛 修复问题2：根据状态显示发送或停止按钮 */}
+              {isWaiting ? (
+                <button 
+                  className="toolbar-stop-btn" 
+                  onClick={handleStop}
+                  title="Stop generation"
+                >
+                  <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <rect x="4" y="4" width="8" height="8" rx="1"/>
+                  </svg>
+                </button>
+              ) : (
+                <button 
+                  className="toolbar-send-btn" 
+                  onClick={() => {
+                    console.log('[App] Send button clicked, hasContent:', hasContent);
+                    editorRef.current?.send();
+                  }}
+                  disabled={!hasContent}
+                  title={hasContent ? "Send message (Enter)" : "Type a message first"}
+                >
+                  <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M15.854 7.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708L14.293 8 8.146 1.854a.5.5 0 1 1 .708-.708l7 7z"/>
+                    <path d="M0 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z"/>
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>

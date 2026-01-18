@@ -82,6 +82,10 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
           // Slice 1: 清除当前会话，下次发消息时创建新会话
           this._currentSessionId = undefined;
           break;
+        case 'stopGeneration':
+          // 🐛 修复问题2：停止AI生成
+          this._handleStopGeneration();
+          break;
         case 'openSettings':
           console.log('[SemipilotWebviewProvider] Settings requested');
           break;
@@ -227,6 +231,26 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
         },
       });
     }
+  }
+
+  // 🐛 修复问题2：停止AI生成
+  private async _handleStopGeneration(): Promise<void> {
+    console.log('[SemipilotWebviewProvider] Stop generation requested');
+    
+    // TODO: Backend实现abort endpoint后解注
+    // if (this._currentSessionId) {
+    //   try {
+    //     await this._messenger.request('chat/abort', {
+    //       sessionId: this._currentSessionId
+    //     });
+    //     console.log('[SemipilotWebviewProvider] Generation stopped');
+    //   } catch (error) {
+    //     console.error('[SemipilotWebviewProvider] Error stopping generation:', error);
+    //   }
+    // }
+    
+    // Slice 1: 仅日志，等待Backend实现
+    console.log('[SemipilotWebviewProvider] ⚠️ Stop endpoint not implemented in Backend yet');
   }
 
   private async _handleContextProvider(providerId: string, query: string): Promise<void> {

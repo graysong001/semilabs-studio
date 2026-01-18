@@ -494,7 +494,8 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
         key: event.key,
         metaKey: event.metaKey,
         ctrlKey: event.ctrlKey,
-        shiftKey: event.shiftKey
+        shiftKey: event.shiftKey,
+        isComposing: (event as any).isComposing // IME输入法状态
       });
       
       // 如果Slash菜单打开，处理菜单导航
@@ -509,6 +510,11 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
       
       // Command+Enter（macOS）或 Ctrl+Enter（Windows/Linux）发送
       if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        // 🐛 修复问题1：中文输入法选字时不发送
+        if ((event as any).isComposing) {
+          console.log('[TipTapEditor] IME composing, ignoring Mod+Enter');
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         console.log('[TipTapEditor] Mod+Enter pressed, sending...');
@@ -518,6 +524,12 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
       
       // Enter 发送（仅当下拉菜单未打开时）
       if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+        // 🐛 修复问题1：中文输入法选字时不发送
+        if ((event as any).isComposing) {
+          console.log('[TipTapEditor] IME composing, ignoring Enter');
+          return;
+        }
+        
         // 如果下拉菜单打开，不发送
         if (tippyInstanceRef.current?.state.isVisible) {
           return;

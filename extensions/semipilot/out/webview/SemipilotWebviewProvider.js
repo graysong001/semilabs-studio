@@ -102,6 +102,10 @@ class SemipilotWebviewProvider {
                     // Slice 1: 清除当前会话，下次发消息时创建新会话
                     this._currentSessionId = undefined;
                     break;
+                case 'stopGeneration':
+                    // 🐛 修复问题2：停止AI生成
+                    this._handleStopGeneration();
+                    break;
                 case 'openSettings':
                     console.log('[SemipilotWebviewProvider] Settings requested');
                     break;
@@ -235,6 +239,23 @@ class SemipilotWebviewProvider {
                 },
             });
         }
+    }
+    // 🐛 修复问题2：停止AI生成
+    async _handleStopGeneration() {
+        console.log('[SemipilotWebviewProvider] Stop generation requested');
+        // TODO: Backend实现abort endpoint后解注
+        // if (this._currentSessionId) {
+        //   try {
+        //     await this._messenger.request('chat/abort', {
+        //       sessionId: this._currentSessionId
+        //     });
+        //     console.log('[SemipilotWebviewProvider] Generation stopped');
+        //   } catch (error) {
+        //     console.error('[SemipilotWebviewProvider] Error stopping generation:', error);
+        //   }
+        // }
+        // Slice 1: 仅日志，等待Backend实现
+        console.log('[SemipilotWebviewProvider] ⚠️ Stop endpoint not implemented in Backend yet');
     }
     async _handleContextProvider(providerId, query) {
         console.log('[SemipilotWebviewProvider] Context provider query:', providerId, query);
