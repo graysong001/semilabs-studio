@@ -46276,6 +46276,7 @@ img.ProseMirror-separator {
     const [model, setModel] = (0, import_react5.useState)("qwen");
     const [hasContent, setHasContent] = (0, import_react5.useState)(false);
     const [isWaiting, setIsWaiting] = (0, import_react5.useState)(false);
+    const [isStopped, setIsStopped] = (0, import_react5.useState)(false);
     const vscodeRef = import_react5.default.useRef(null);
     const editorRef = import_react5.default.useRef(null);
     const slashHandlerRef = (0, import_react5.useRef)(new SlashCommandHandler());
@@ -46328,6 +46329,10 @@ ${helpMessage}`,
         console.log("[App] Message received from Extension Host:", message);
         switch (message.type) {
           case "assistantMessage":
+            if (isStopped) {
+              console.log("[App] \u26A0\uFE0F User stopped generation, ignoring assistantMessage");
+              return;
+            }
             setIsWaiting(false);
             console.log("[App] \u2705 isWaiting set to FALSE - loading animation should stop");
             if (message.message) {
@@ -46380,7 +46385,7 @@ ${helpMessage}`,
       };
       window.addEventListener("message", messageHandler);
       return () => window.removeEventListener("message", messageHandler);
-    }, []);
+    }, [isStopped]);
     const handleSend = (0, import_react5.useCallback)(async (content, contextItems) => {
       console.log("[App] handleSend called:", { content, contextItems });
       const isCommand = await slashHandlerRef.current.execute(content);
@@ -46389,6 +46394,7 @@ ${helpMessage}`,
         setHasContent(false);
         return;
       }
+      setIsStopped(false);
       const userMessage = {
         id: Date.now().toString(),
         content,
@@ -46435,6 +46441,7 @@ ${helpMessage}`,
     const handleNewChat = () => {
       setMessages([]);
       setIsWaiting(false);
+      setIsStopped(false);
       if (vscodeRef.current) {
         vscodeRef.current.postMessage({ type: "newChat" });
       }
@@ -46457,6 +46464,7 @@ ${helpMessage}`,
     const handleStop = (0, import_react5.useCallback)(() => {
       console.log("[App] Stop button clicked");
       setIsWaiting(false);
+      setIsStopped(true);
       if (vscodeRef.current) {
         vscodeRef.current.postMessage({
           type: "stopGeneration"

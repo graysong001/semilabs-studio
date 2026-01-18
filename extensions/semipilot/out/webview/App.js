@@ -48,6 +48,7 @@ const App = () => {
     const [model, setModel] = (0, react_1.useState)('qwen');
     const [hasContent, setHasContent] = (0, react_1.useState)(false); // 追踪输入框是否有内容
     const [isWaiting, setIsWaiting] = (0, react_1.useState)(false); // 等待AI回复
+    const [isStopped, setIsStopped] = (0, react_1.useState)(false); // 🐛 用户是否点击了停止
     const vscodeRef = react_1.default.useRef(null);
     const editorRef = react_1.default.useRef(null); // TipTap Editor 引用
     const slashHandlerRef = (0, react_1.useRef)(new SlashCommandHandler_1.SlashCommandHandler());
@@ -105,6 +106,11 @@ const App = () => {
             console.log('[App] Message received from Extension Host:', message);
             switch (message.type) {
                 case 'assistantMessage':
+                    // 🐛 修复：如果用户已点击停止，忽略Backend返回的响应
+                    if (isStopped) {
+                        console.log('[App] ⚠️ User stopped generation, ignoring assistantMessage');
+                        return;
+                    }
                     // 处理Agent回复
                     setIsWaiting(false); // 收到回复，停止加载动画
                     console.log('[App] ✅ isWaiting set to FALSE - loading animation should stop');
@@ -161,7 +167,7 @@ const App = () => {
         };
         window.addEventListener('message', messageHandler);
         return () => window.removeEventListener('message', messageHandler);
-    }, []);
+    }, [isStopped]); // 🐛 添加isStopped依赖
     const handleSend = (0, react_1.useCallback)(async (content, contextItems) => {
         console.log('[App] handleSend called:', { content, contextItems });
         // 检测是否为 Slash Command
@@ -172,6 +178,8 @@ const App = () => {
             setHasContent(false);
             return;
         }
+        // 🐛 发送新消息时重置isStopped标记
+        setIsStopped(false);
         // 添加用户消息
         const userMessage = {
             id: Date.now().toString(),
@@ -224,6 +232,7 @@ const App = () => {
     const handleNewChat = () => {
         setMessages([]);
         setIsWaiting(false); // 清除加载状态
+        setIsStopped(false); // 🐛 清除停止标记
         if (vscodeRef.current) {
             vscodeRef.current.postMessage({ type: 'newChat' });
         }
@@ -247,6 +256,7 @@ const App = () => {
     const handleStop = (0, react_1.useCallback)(() => {
         console.log('[App] Stop button clicked');
         setIsWaiting(false);
+        setIsStopped(true); // 🐛 设置停止标记，拒绝后续响应
         // 发送停止请求到 Extension Host
         if (vscodeRef.current) {
             vscodeRef.current.postMessage({
