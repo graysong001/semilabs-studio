@@ -59,10 +59,12 @@ const tippy_js_1 = __importDefault(require("tippy.js"));
 // Mention 下拉菜单组件
 const MentionList = react_1.default.forwardRef((props, ref) => {
     const [selectedIndex, setSelectedIndex] = (0, react_1.useState)(0);
+    const itemRefs = (0, react_1.useRef)([]);
     const selectItem = (index) => {
         const item = props.items[index];
         if (item) {
-            props.command({ id: item.id, label: item.label });
+            // 传递 type 属性，用于 mention 节点
+            props.command({ id: item.id, label: item.label, type: item.type });
         }
     };
     const upHandler = () => {
@@ -75,6 +77,16 @@ const MentionList = react_1.default.forwardRef((props, ref) => {
         selectItem(selectedIndex);
     };
     (0, react_1.useEffect)(() => setSelectedIndex(0), [props.items]);
+    // 自动滚动到选中项
+    (0, react_1.useEffect)(() => {
+        const selectedElement = itemRefs.current[selectedIndex];
+        if (selectedElement) {
+            selectedElement.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+            });
+        }
+    }, [selectedIndex]);
     react_1.default.useImperativeHandle(ref, () => ({
         onKeyDown: ({ event }) => {
             if (event.key === 'ArrowUp') {
@@ -92,7 +104,7 @@ const MentionList = react_1.default.forwardRef((props, ref) => {
             return false;
         },
     }));
-    return (react_1.default.createElement("div", { className: "mention-dropdown" }, props.items.length ? (props.items.map((item, index) => (react_1.default.createElement("button", { className: `mention-item ${index === selectedIndex ? 'selected' : ''}`, key: item.id, onClick: () => selectItem(index) },
+    return (react_1.default.createElement("div", { className: "mention-dropdown" }, props.items.length ? (props.items.map((item, index) => (react_1.default.createElement("button", { ref: (el) => (itemRefs.current[index] = el), className: `mention-item ${index === selectedIndex ? 'selected' : ''}`, key: item.id, onClick: () => selectItem(index) },
         react_1.default.createElement("div", { className: "mention-item-content" },
             react_1.default.createElement("span", { className: "mention-item-icon" }, item.type === 'spec' ? '📄' :
                 item.type === 'file' ? '📁' :
@@ -187,15 +199,23 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
                 HTMLAttributes: {
                     class: 'mention-badge',
                 },
+                renderLabel({ node }) {
+                    // 自定义显示：显示完整文件名（包含扩展名）
+                    return `@${node.attrs.label}`;
+                },
                 suggestion: {
                     items: async ({ query }) => {
-                        // 检测 @ 后面的字符，判断类型
-                        const type = query.startsWith('spec') ? 'spec' :
+                        // 检测 @ 后面的字符，判断类型（支持通用 @ 搜索）
+                        const providerId = query.startsWith('spec') ? 'spec' :
                             query.startsWith('file') ? 'file' :
                                 query.startsWith('folder') ? 'folder' :
-                                    query.startsWith('code') ? 'code' : 'spec';
+                                    query.startsWith('code') ? 'code' : 'all';
+                        // 根据前缀裁剪查询词（保留原始 query 作为兜底）
+                        const trimmedQuery = providerId === 'all'
+                            ? query
+                            : query.replace(/^(spec|file|folder|code)/, '').trim() || query;
                         // 调用 Context Provider
-                        const results = await onContextProvider(type, query);
+                        const results = await onContextProvider(providerId, trimmedQuery);
                         return results;
                     },
                     render: () => {
@@ -262,7 +282,7 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
                     mentions.push({
                         id: node.attrs.id,
                         label: node.attrs.label,
-                        type: 'spec', // 从 attrs 中获取实际类型
+                        type: node.attrs.type || 'spec', // 从 attrs 中获取实际类型
                     });
                 }
                 if (node.content) {
@@ -278,21 +298,18 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
             onContentChange?.(hasContent);
             // 检测是否输入了 /
             const text = editor.getText();
-            console.log('[TipTapEditor] onUpdate, text:', JSON.stringify(text), 'onSlashCommand:', !!onSlashCommand);
             // 检查是否输入了斜杠命令
             const trimmedText = text.trim();
             if (trimmedText.startsWith('/') && onSlashCommand) {
                 const commandPrefix = trimmedText.slice(1); // 移除开头的 /
                 // 如果只输入了 / 或者输入了命令前缀，显示菜单
                 if (commandPrefix.length === 0 || commandPrefix.length > 0) {
-                    console.log('[TipTapEditor] Showing slash menu for prefix:', commandPrefix);
                     setShowSlashMenu(true);
                     // 过滤命令列表
                     const allCommands = onSlashCommand();
                     const filteredCommands = commandPrefix.length === 0
                         ? allCommands
                         : allCommands.filter(cmd => cmd.name.toLowerCase().startsWith(commandPrefix.toLowerCase()));
-                    console.log('[TipTapEditor] Filtered commands:', filteredCommands.length, 'of', allCommands.length);
                     // 如果没有匹配的命令，隐藏菜单
                     if (filteredCommands.length === 0) {
                         if (slashTippyRef.current) {
@@ -431,12 +448,10 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
             if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
                 // 🐛 修复问题1：中文输入法选字时不发送
                 if (event.isComposing) {
-                    console.log('[TipTapEditor] IME composing, ignoring Mod+Enter');
                     return;
                 }
                 event.preventDefault();
                 event.stopPropagation();
-                console.log('[TipTapEditor] Mod+Enter pressed, sending...');
                 handleSend();
                 return;
             }
@@ -444,7 +459,6 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
             if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
                 // 🐛 修复问题1：中文输入法选字时不发送
                 if (event.isComposing) {
-                    console.log('[TipTapEditor] IME composing, ignoring Enter');
                     return;
                 }
                 // 如果下拉菜单打开，不发送
@@ -453,7 +467,6 @@ exports.TipTapEditor = react_1.default.forwardRef(({ onSend, onContextProvider, 
                 }
                 event.preventDefault();
                 event.stopPropagation();
-                console.log('[TipTapEditor] Enter pressed, sending...');
                 handleSend();
             }
         };

@@ -47,6 +47,7 @@ const ContextProviderManager_1 = require("./context/ContextProviderManager");
 const taskCommands_1 = require("./commands/taskCommands");
 let messenger;
 let contextManager;
+let webviewProvider;
 function activate(context) {
     console.log('[Semipilot] Activating extension...');
     // Get workspace root
@@ -74,11 +75,11 @@ function activate(context) {
     messenger.onError((message, error) => {
         vscode.window.showErrorMessage(`Semipilot Error: ${error.message}`);
     });
-    // Register webview provider
-    const webviewProvider = new SemipilotWebviewProvider_1.SemipilotWebviewProvider(context.extensionUri, context, messenger, // 传递 messenger
+    const webviewProviderInstance = new SemipilotWebviewProvider_1.SemipilotWebviewProvider(context.extensionUri, context, messenger, // 传递 messenger
     contextManager // 传递 contextManager
     );
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(SemipilotWebviewProvider_1.SemipilotWebviewProvider.viewType, webviewProvider));
+    webviewProvider = webviewProviderInstance;
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(SemipilotWebviewProvider_1.SemipilotWebviewProvider.viewType, webviewProviderInstance));
     // Register task commands
     (0, taskCommands_1.registerTaskCommands)(context);
     // Register command: Open Chat
@@ -98,6 +99,22 @@ function activate(context) {
         }
     });
     context.subscriptions.push(openChatCommand);
+    // Register command: Add Active File to Chat Context
+    const addActiveFileCommand = vscode.commands.registerCommand('semipilot.addActiveFileToContext', async () => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            vscode.window.showWarningMessage('Semipilot: 当前没有活动文件，无法注入上下文。');
+            return;
+        }
+        const filePath = activeEditor.document.uri.fsPath;
+        if (!webviewProvider) {
+            vscode.window.showWarningMessage('Semipilot: Chat Panel 尚未初始化，请先打开 Chat 视图。');
+            return;
+        }
+        webviewProvider.addContextFromFile(filePath);
+        vscode.window.showInformationMessage(`Semipilot: 已将当前文件加入本轮对话上下文。`);
+    });
+    context.subscriptions.push(addActiveFileCommand);
     console.log('[Semipilot] Extension activated successfully');
 }
 function deactivate() {

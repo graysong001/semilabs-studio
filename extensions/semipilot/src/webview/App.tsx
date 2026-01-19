@@ -43,10 +43,6 @@ export const App: React.FC = () => {
   // 通过外部命令注入的上下文项（例如：从当前活动文件注入）
   const [externalContextItems, setExternalContextItems] = useState<ContextItem[]>([]);
 
-  useEffect(() => {
-    console.log('[App] 🔄 Render state: isWaiting =', isWaiting, ', messages.length =', messages.length);
-  }, [isWaiting, messages]);
-
   // 计时器：等待 AI 回复时每秒更新
   useEffect(() => {
     if (!isWaiting) {
@@ -115,7 +111,6 @@ export const App: React.FC = () => {
         case 'assistantMessage':
           // 🐛 修复：如果用户已点击停止，忽略Backend返回的响应
           if (isStopped) {
-            console.log('[App] User stopped generation, ignoring response');
             return;
           }
           

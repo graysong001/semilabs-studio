@@ -12,6 +12,7 @@ const react_1 = __importDefault(require("react"));
 const client_1 = __importDefault(require("react-dom/client"));
 const App_1 = require("./App");
 require("./styles.css");
+require("highlight.js/styles/github-dark.css"); // 代码高亮主题
 // 先获取 VS Code API（只能调用一次），并保存到 window 对象
 try {
     if (typeof window.acquireVsCodeApi === 'function') {

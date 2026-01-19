@@ -79,8 +79,6 @@ const MentionList = React.forwardRef((props: any, ref) => {
 
   React.useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-      console.log('[MentionList] Key pressed:', event.key);
-      
       if (event.key === 'ArrowUp') {
         upHandler();
         return true;
@@ -103,13 +101,7 @@ const MentionList = React.forwardRef((props: any, ref) => {
   return (
     <div className="mention-dropdown">
       {props.items.length ? (
-        props.items.map((item: ContextItem, index: number) => {
-          // 调试日志：检查 description 是否存在
-          if (index === 0) {
-            console.log('[MentionList] First item:', { label: item.label, description: item.description });
-          }
-          
-          return (
+        props.items.map((item: ContextItem, index: number) => (
             <button
               ref={(el) => (itemRefs.current[index] = el)}
               className={`mention-item ${index === selectedIndex ? 'selected' : ''}`}
@@ -130,8 +122,7 @@ const MentionList = React.forwardRef((props: any, ref) => {
                 </div>
               </div>
             </button>
-          );
-        })
+        ))
       ) : (
         <div className="mention-empty">No results</div>
       )}
@@ -320,16 +311,12 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
               },
 
               onKeyDown(props: any) {
-                console.log('[TipTap Mention] onKeyDown:', props.event.key);
-                
                 if (props.event.key === 'Escape') {
                   popup[0].hide();
                   return true;
                 }
 
-                const handled = (component.ref as any)?.onKeyDown?.(props) || false;
-                console.log('[TipTap Mention] Key handled by MentionList:', handled);
-                return handled;
+                return (component.ref as any)?.onKeyDown?.(props) || false;
               },
 
               onExit() {
@@ -378,7 +365,6 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
       
       // 检测是否输入了 /
       const text = editor.getText();
-      console.log('[TipTapEditor] onUpdate, text:', JSON.stringify(text), 'onSlashCommand:', !!onSlashCommand);
       
       // 检查是否输入了斜杠命令
       const trimmedText = text.trim();
@@ -387,7 +373,6 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
         
         // 如果只输入了 / 或者输入了命令前缀，显示菜单
         if (commandPrefix.length === 0 || commandPrefix.length > 0) {
-          console.log('[TipTapEditor] Showing slash menu for prefix:', commandPrefix);
           setShowSlashMenu(true);
           
           // 过滤命令列表
@@ -395,8 +380,6 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
           const filteredCommands = commandPrefix.length === 0 
             ? allCommands 
             : allCommands.filter(cmd => cmd.name.toLowerCase().startsWith(commandPrefix.toLowerCase()));
-          
-          console.log('[TipTapEditor] Filtered commands:', filteredCommands.length, 'of', allCommands.length);
           
           // 如果没有匹配的命令，隐藏菜单
           if (filteredCommands.length === 0) {
@@ -548,12 +531,10 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
       if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
         // 🐛 修复问题1：中文输入法选字时不发送
         if ((event as any).isComposing) {
-          console.log('[TipTapEditor] IME composing, ignoring Mod+Enter');
           return;
         }
         event.preventDefault();
         event.stopPropagation();
-        console.log('[TipTapEditor] Mod+Enter pressed, sending...');
         handleSend();
         return;
       }
@@ -562,7 +543,6 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
       if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
         // 🐛 修复问题1：中文输入法选字时不发送
         if ((event as any).isComposing) {
-          console.log('[TipTapEditor] IME composing, ignoring Enter');
           return;
         }
         
@@ -572,7 +552,6 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
         }
         event.preventDefault();
         event.stopPropagation();
-        console.log('[TipTapEditor] Enter pressed, sending...');
         handleSend();
       }
     };

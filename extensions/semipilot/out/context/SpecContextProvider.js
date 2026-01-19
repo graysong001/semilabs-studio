@@ -75,8 +75,8 @@ class SpecContextProvider {
             if (matches) {
                 results.push({
                     id: filePath,
-                    title: metadata.title || path.basename(filePath, '.md'),
-                    description: this.formatDescription(metadata),
+                    title: path.basename(filePath), // 文件名(包含后缀)
+                    description: vscode.workspace.asRelativePath(filePath), // 相对路径
                     type: 'spec',
                     icon: this.getSpecIcon(metadata.status),
                     metadata: {
@@ -107,8 +107,8 @@ class SpecContextProvider {
             const metadata = this.specIndex.get(id);
             return {
                 id,
-                title: metadata?.title || path.basename(id, '.md'),
-                description: this.formatDescription(metadata),
+                title: path.basename(id), // 文件名(包含后缀)
+                description: vscode.workspace.asRelativePath(id), // 相对路径
                 content: text,
                 type: 'spec',
                 icon: this.getSpecIcon(metadata?.status),

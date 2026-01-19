@@ -37,9 +37,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.App = void 0;
 const react_1 = __importStar(require("react"));
+const react_markdown_1 = __importDefault(require("react-markdown"));
+const remark_gfm_1 = __importDefault(require("remark-gfm"));
+const rehype_highlight_1 = __importDefault(require("rehype-highlight"));
 const TipTapEditor_1 = require("./TipTapEditor");
 const SlashCommandHandler_1 = require("./SlashCommandHandler");
 const App = () => {
@@ -48,15 +54,28 @@ const App = () => {
     const [model, setModel] = (0, react_1.useState)('qwen');
     const [hasContent, setHasContent] = (0, react_1.useState)(false); // 追踪输入框是否有内容
     const [isWaiting, setIsWaiting] = (0, react_1.useState)(false); // 等待AI回复
+    const [waitingTime, setWaitingTime] = (0, react_1.useState)(0); // 等待时长（秒）
     const [isStopped, setIsStopped] = (0, react_1.useState)(false); // 🐛 用户是否点击了停止
     const vscodeRef = react_1.default.useRef(null);
     const editorRef = react_1.default.useRef(null); // TipTap Editor 引用
     const slashHandlerRef = (0, react_1.useRef)(new SlashCommandHandler_1.SlashCommandHandler());
     // 保存 Context Provider 查询的 Promise resolvers
     const contextQueryResolversRef = react_1.default.useRef(new Map());
+    // 通过外部命令注入的上下文项（例如：从当前活动文件注入）
+    const [externalContextItems, setExternalContextItems] = (0, react_1.useState)([]);
+    // 计时器：等待 AI 回复时每秒更新
     (0, react_1.useEffect)(() => {
-        console.log('[App] 🔄 Render state: isWaiting =', isWaiting, ', messages.length =', messages.length);
-    }, [isWaiting, messages]);
+        if (!isWaiting) {
+            setWaitingTime(0);
+            return;
+        }
+        const startTime = Date.now();
+        const timer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            setWaitingTime(elapsed);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [isWaiting]);
     (0, react_1.useEffect)(() => {
         // 从 window.__vscodeApi 获取已保存的 VS Code API 实例
         // ⚠️ 不要调用 acquireVsCodeApi()，它只能调用一次（在 index.tsx 中已调用）
@@ -101,7 +120,6 @@ const App = () => {
                 case 'assistantMessage':
                     // 🐛 修复：如果用户已点击停止，忽略Backend返回的响应
                     if (isStopped) {
-                        console.log('[App] User stopped generation, ignoring response');
                         return;
                     }
                     // 处理Agent回复
@@ -154,6 +172,35 @@ const App = () => {
                         }
                     }
                     break;
+                case 'addContextFromFile': {
+                    const filePath = message.filePath;
+                    if (!filePath) {
+                        console.warn('[App] addContextFromFile message missing filePath');
+                        break;
+                    }
+                    const label = filePath.split(/[/\\]/).pop() || filePath;
+                    const newItem = {
+                        id: filePath,
+                        label,
+                        type: 'file',
+                        description: filePath,
+                    };
+                    setExternalContextItems(prev => {
+                        const exists = prev.some(item => item.id === newItem.id && item.type === newItem.type);
+                        if (exists) {
+                            return prev;
+                        }
+                        return [...prev, newItem];
+                    });
+                    const infoMsg = {
+                        id: Date.now().toString(),
+                        content: `📎 已将当前文件加入上下文：${label}`,
+                        isUser: false,
+                        timestamp: Date.now(),
+                    };
+                    setMessages(prev => [...prev, infoMsg]);
+                    break;
+                }
             }
         };
         window.addEventListener('message', messageHandler);
@@ -169,12 +216,22 @@ const App = () => {
         }
         // 🐛 发送新消息时重置isStopped标记
         setIsStopped(false);
+        // 合并 TipTap 提及和外部注入的上下文
+        const mergedContextMap = new Map();
+        [...contextItems, ...externalContextItems].forEach(item => {
+            const key = `${item.type}:${item.id}`;
+            if (!mergedContextMap.has(key)) {
+                mergedContextMap.set(key, item);
+            }
+        });
+        const allContextItems = Array.from(mergedContextMap.values());
         // 添加用户消息
         const userMessage = {
             id: Date.now().toString(),
             content,
             isUser: true,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            contextItems: allContextItems.length > 0 ? allContextItems : undefined, // 保存上下文
         };
         setMessages(prev => [...prev, userMessage]);
         setIsWaiting(true); // 开始等待AI回复
@@ -183,14 +240,14 @@ const App = () => {
             vscodeRef.current.postMessage({
                 type: 'userMessage',
                 message: content,
-                contextItems,
+                contextItems: allContextItems,
                 agent,
                 model
             });
         }
         // 发送后重置内容状态
         setHasContent(false);
-    }, [agent, model]);
+    }, [agent, model, externalContextItems]);
     const handleContextProvider = (0, react_1.useCallback)(async (type, query) => {
         if (!vscodeRef.current) {
             console.error('[App] VS Code API not available');
@@ -220,6 +277,7 @@ const App = () => {
         setMessages([]);
         setIsWaiting(false); // 清除加载状态
         setIsStopped(false); // 🐛 清除停止标记
+        setExternalContextItems([]); // 清空外部注入的上下文
         if (vscodeRef.current) {
             vscodeRef.current.postMessage({ type: 'newChat' });
         }
@@ -274,15 +332,35 @@ const App = () => {
             react_1.default.createElement("div", { className: "empty-state-icon" }, "\uD83D\uDCAC\u2728"),
             react_1.default.createElement("div", { className: "empty-state-title" }, "Build with Semipilot"),
             react_1.default.createElement("div", { className: "empty-state-subtitle" }, "Start a conversation with your AI coding assistant"))) : (react_1.default.createElement(react_1.default.Fragment, null,
-            messages.map(msg => (react_1.default.createElement("div", { key: msg.id, className: "message" },
-                react_1.default.createElement("div", { className: "message-content" }, msg.content),
+            messages.map(msg => (react_1.default.createElement("div", { key: msg.id, className: `message ${msg.isUser ? 'user-message' : 'assistant-message'}` },
+                react_1.default.createElement("div", { className: "message-content" }, msg.isUser ? (
+                // 用户消息：直接显示文本
+                react_1.default.createElement(react_1.default.Fragment, null,
+                    react_1.default.createElement("div", { className: "user-text" }, msg.content),
+                    msg.contextItems && msg.contextItems.length > 0 && (react_1.default.createElement("div", { className: "context-files" }, msg.contextItems.map((item, index) => (react_1.default.createElement("span", { key: index, className: "context-file-badge" },
+                        item.type === 'spec' ? '📄' : '📁',
+                        " ",
+                        item.label))))))) : (
+                // AI 回复：Markdown 渲染
+                react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default], rehypePlugins: [rehype_highlight_1.default], components: {
+                        code(props) {
+                            const { node, inline, className, children, ...rest } = props;
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (react_1.default.createElement("pre", { className: `language-${match[1]}` },
+                                react_1.default.createElement("code", { className: className, ...rest }, children))) : (react_1.default.createElement("code", { className: className, ...rest }, children));
+                        },
+                    } }, msg.content))),
                 react_1.default.createElement("div", { className: "message-actions" },
                     react_1.default.createElement("button", { className: "message-copy-btn", onClick: () => copyMessage(msg.content), title: "Copy message" }, "\uD83D\uDCCB"))))),
             isWaiting && (react_1.default.createElement("div", { className: "message loading-message" },
-                react_1.default.createElement("div", { className: "loading-dots" },
-                    react_1.default.createElement("span", { className: "dot" }),
-                    react_1.default.createElement("span", { className: "dot" }),
-                    react_1.default.createElement("span", { className: "dot" }))))))),
+                react_1.default.createElement("div", { className: "loading-content" },
+                    react_1.default.createElement("div", { className: "loading-dots" },
+                        react_1.default.createElement("span", { className: "dot" }),
+                        react_1.default.createElement("span", { className: "dot" }),
+                        react_1.default.createElement("span", { className: "dot" })),
+                    react_1.default.createElement("span", { className: "loading-timer" },
+                        waitingTime,
+                        "s"))))))),
         react_1.default.createElement("div", { className: "input-container" },
             react_1.default.createElement("div", { className: "input-wrapper" },
                 react_1.default.createElement("div", { className: "input-header" },
