@@ -42,11 +42,13 @@ export interface TipTapEditorRef {
 // Mention 下拉菜单组件
 const MentionList = React.forwardRef((props: any, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const selectItem = (index: number) => {
     const item = props.items[index];
     if (item) {
-      props.command({ id: item.id, label: item.label });
+      // 传递 type 属性，用于 mention 节点
+      props.command({ id: item.id, label: item.label, type: item.type });
     }
   };
 
@@ -64,8 +66,21 @@ const MentionList = React.forwardRef((props: any, ref) => {
 
   useEffect(() => setSelectedIndex(0), [props.items]);
 
+  // 自动滚动到选中项
+  useEffect(() => {
+    const selectedElement = itemRefs.current[selectedIndex];
+    if (selectedElement) {
+      selectedElement.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      });
+    }
+  }, [selectedIndex]);
+
   React.useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+      console.log('[MentionList] Key pressed:', event.key);
+      
       if (event.key === 'ArrowUp') {
         upHandler();
         return true;
@@ -88,27 +103,35 @@ const MentionList = React.forwardRef((props: any, ref) => {
   return (
     <div className="mention-dropdown">
       {props.items.length ? (
-        props.items.map((item: ContextItem, index: number) => (
-          <button
-            className={`mention-item ${index === selectedIndex ? 'selected' : ''}`}
-            key={item.id}
-            onClick={() => selectItem(index)}
-          >
-            <div className="mention-item-content">
-              <span className="mention-item-icon">
-                {item.type === 'spec' ? '📄' : 
-                 item.type === 'file' ? '📁' : 
-                 item.type === 'folder' ? '📂' : '💬'}
-              </span>
-              <div className="mention-item-text">
-                <div className="mention-item-label">{item.label}</div>
-                {item.description && (
-                  <div className="mention-item-desc">{item.description}</div>
-                )}
+        props.items.map((item: ContextItem, index: number) => {
+          // 调试日志：检查 description 是否存在
+          if (index === 0) {
+            console.log('[MentionList] First item:', { label: item.label, description: item.description });
+          }
+          
+          return (
+            <button
+              ref={(el) => (itemRefs.current[index] = el)}
+              className={`mention-item ${index === selectedIndex ? 'selected' : ''}`}
+              key={item.id}
+              onClick={() => selectItem(index)}
+            >
+              <div className="mention-item-content">
+                <span className="mention-item-icon">
+                  {item.type === 'spec' ? '📄' : 
+                   item.type === 'file' ? '📁' : 
+                   item.type === 'folder' ? '📂' : '💬'}
+                </span>
+                <div className="mention-item-text">
+                  <div className="mention-item-label">{item.label}</div>
+                  {item.description && (
+                    <div className="mention-item-desc">{item.description}</div>
+                  )}
+                </div>
               </div>
-            </div>
-          </button>
-        ))
+            </button>
+          );
+        })
       ) : (
         <div className="mention-empty">No results</div>
       )}
@@ -235,16 +258,25 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
         HTMLAttributes: {
           class: 'mention-badge',
         },
+        renderLabel({ node }) {
+          // 自定义显示：显示完整文件名（包含扩展名）
+          return `@${node.attrs.label}`;
+        },
         suggestion: {
           items: async ({ query }) => {
-            // 检测 @ 后面的字符，判断类型
-            const type = query.startsWith('spec') ? 'spec' :
+            // 检测 @ 后面的字符，判断类型（支持通用 @ 搜索）
+            const providerId = query.startsWith('spec') ? 'spec' :
                         query.startsWith('file') ? 'file' :
                         query.startsWith('folder') ? 'folder' :
-                        query.startsWith('code') ? 'code' : 'spec';
+                        query.startsWith('code') ? 'code' : 'all';
+
+            // 根据前缀裁剪查询词（保留原始 query 作为兜底）
+            const trimmedQuery = providerId === 'all'
+              ? query
+              : query.replace(/^(spec|file|folder|code)/, '').trim() || query;
             
             // 调用 Context Provider
-            const results = await onContextProvider(type, query);
+            const results = await onContextProvider(providerId, trimmedQuery);
             return results;
           },
           render: () => {
@@ -288,12 +320,16 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
               },
 
               onKeyDown(props: any) {
+                console.log('[TipTap Mention] onKeyDown:', props.event.key);
+                
                 if (props.event.key === 'Escape') {
                   popup[0].hide();
                   return true;
                 }
 
-                return (component.ref as any)?.onKeyDown?.(props) || false;
+                const handled = (component.ref as any)?.onKeyDown?.(props) || false;
+                console.log('[TipTap Mention] Key handled by MentionList:', handled);
+                return handled;
               },
 
               onExit() {
@@ -322,7 +358,7 @@ export const TipTapEditor = React.forwardRef<TipTapEditorRef, TipTapEditorProps>
           mentions.push({
             id: node.attrs.id,
             label: node.attrs.label,
-            type: 'spec', // 从 attrs 中获取实际类型
+            type: node.attrs.type || 'spec', // 从 attrs 中获取实际类型
           });
         }
         if (node.content) {

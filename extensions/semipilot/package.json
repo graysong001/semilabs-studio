@@ -36,6 +36,10 @@
       {
         "command": "semipilot.openChat",
         "title": "Semipilot: Open Chat"
+      },
+      {
+        "command": "semipilot.addActiveFileToContext",
+        "title": "Semipilot: Add Active File to Chat Context"
       }
     ]
   },
@@ -86,6 +90,9 @@
     "eventsource": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "tippy.js": "^6.3.7",
     "uuid": "^9.0.0"
   }

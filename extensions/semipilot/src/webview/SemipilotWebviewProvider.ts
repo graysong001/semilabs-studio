@@ -13,6 +13,7 @@ import * as vscode from 'vscode';
 import { ContextProviderManager } from '../context/ContextProviderManager';
 import { TaskContextProvider, TaskDocument, Priority, TaskStatus } from '../context/TaskContextProvider';
 import { SseMessenger } from '../messenger/SseMessenger';
+import type { ContextItem as ChatContextItem } from '../messenger/SemilabsProtocol';
 
 export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'semipilot.chatView';
@@ -20,6 +21,18 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private _taskProvider?: TaskContextProvider;
   private _currentSessionId?: string; // Slice 1: 缓存当前会话ID
+
+  public addContextFromFile(filePath: string): void {
+    if (!this._view) {
+      vscode.window.showWarningMessage('Semipilot: Chat Panel 尚未初始化，请先打开 Chat 视图。');
+      return;
+    }
+
+    this._view.webview.postMessage({
+      type: 'addContextFromFile',
+      filePath,
+    });
+  }
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
@@ -63,7 +76,8 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
       switch (data.type) {
         case 'webviewReady':
           console.log('[SemipilotWebviewProvider] ✅ Webview initialized successfully');
-          vscode.window.showInformationMessage('Semipilot Chat Panel is ready!');
+          // 不显示通知，避免遮挡界面
+          // vscode.window.showInformationMessage('Semipilot Chat Panel is ready!');
           break;
         case 'userMessage':
           this._handleUserMessage(data.message, data.contextItems, data.agent, data.model);
@@ -194,12 +208,59 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
         console.log('[SemipilotWebviewProvider] Reusing session:', this._currentSessionId);
       }
       
+      // 在发送前解析上下文项内容（根据类型从对应 Provider 读取全文）
+      let resolvedContextItems: ChatContextItem[] | undefined;
+      if (this._contextManager && Array.isArray(contextItems) && contextItems.length > 0) {
+        const collected: ChatContextItem[] = [];
+        
+        for (const item of contextItems) {
+          try {
+            const providerId =
+              item.type === 'spec' ? 'spec' :
+              item.type === 'file' ? 'file' :
+              item.type === 'folder' ? 'file' :
+              item.type === 'code' ? 'file' : undefined;
+            
+            if (!providerId) {
+              continue;
+            }
+            
+            const provider = this._contextManager.getProvider(providerId);
+            if (!provider) {
+              continue;
+            }
+            
+            const full = await provider.getContent(item.id);
+            if (!full || !full.content) {
+              continue;
+            }
+            
+            collected.push({
+              id: full.id,
+              type: full.type,
+              content: full.content,
+            });
+          } catch (error) {
+            console.error('[SemipilotWebviewProvider] Failed to resolve context item:', item.id, error);
+          }
+        }
+        
+        if (collected.length > 0) {
+          resolvedContextItems = collected;
+        }
+      }
+
       // 发送消息到Backend
+      const requestBody: { content: string; contextItems?: ChatContextItem[] } = {
+        content: message,
+      };
+      if (resolvedContextItems && resolvedContextItems.length > 0) {
+        requestBody.contextItems = resolvedContextItems;
+      }
+
       const response = await this._messenger.request('chat/send-message', {
         sessionId: this._currentSessionId,
-        request: {
-          content: message, // Slice 1: 仅content字段
-        },
+        request: requestBody,
       });
       
       console.log('[SemipilotWebviewProvider] Message response:', response);
@@ -296,32 +357,69 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
     }
     
     try {
-      const provider = this._contextManager.getProvider(providerId);
-      if (!provider) {
-        console.warn(`[SemipilotWebviewProvider] Provider not found: ${providerId}`);
-        this._view?.webview.postMessage({
-          type: 'contextProviderResults',
-          providerId,
-          query,
-          results: []
-        });
-        return;
+      let results: any[] = [];
+      
+      // 将 folder/code 映射到 file Provider，避免无结果
+      const effectiveProviderId = (providerId === 'folder' || providerId === 'code')
+        ? 'file'
+        : providerId;
+      
+      if (effectiveProviderId === 'all') {
+        const specProvider = this._contextManager.getProvider('spec');
+        const fileProvider = this._contextManager.getProvider('file');
+        
+        const [specResults, fileResults] = await Promise.all([
+          specProvider ? specProvider.search(query) : Promise.resolve([]),
+          fileProvider ? fileProvider.search(query) : Promise.resolve([]),
+        ]);
+        
+        const seen = new Set<string>();
+        const merged: any[] = [];
+        
+        for (const item of specResults) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            merged.push(item);
+          }
+        }
+        
+        for (const item of fileResults) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            merged.push(item);
+          }
+        }
+        
+        results = merged;
+      } else {
+        const provider = this._contextManager.getProvider(effectiveProviderId);
+        if (!provider) {
+          console.warn(`[SemipilotWebviewProvider] Provider not found: ${effectiveProviderId}`);
+          this._view?.webview.postMessage({
+            type: 'contextProviderResults',
+            providerId,
+            query,
+            results: []
+          });
+          return;
+        }
+        
+        // 调用 provider 的 search 方法
+        results = await provider.search(query);
       }
       
-      // 调用 provider 的 search 方法
-      const results = await provider.search(query);
-      console.log(`[SemipilotWebviewProvider] Found ${results.length} results for "${query}"`);
+      console.log(`[SemipilotWebviewProvider] Found ${results.length} results for "${query}" (provider: ${providerId})`);
       
       // 返回结果给 Webview
       this._view?.webview.postMessage({
         type: 'contextProviderResults',
         providerId,
         query,
-        results: results.map(item => ({
+        results: results.map((item: any) => ({
           id: item.id,
-          label: item.title,
+          label: item.title,  // 主标签：文件名
           type: item.type,
-          description: item.description,
+          description: item.description,  // 副标签：工作区相对路径
           metadata: item.metadata
         }))
       });

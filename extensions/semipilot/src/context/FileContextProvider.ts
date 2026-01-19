@@ -24,14 +24,25 @@ export class FileContextProvider implements IContextProvider {
       return this.getRecentFiles();
     }
 
-    // Use VS Code's workspace file search
-    const files = await vscode.workspace.findFiles(
-      `**/*${query}*`,
+    // Use VS Code's workspace file search (case-insensitive)
+    const lowerQuery = query.toLowerCase();
+    
+    // 搜索所有文件，然后过滤（支持模糊匹配）
+    const allFiles = await vscode.workspace.findFiles(
+      '**/*',
       '**/node_modules/**',
-      20 // Limit to 20 results
+      200 // 先获取更多结果用于过滤
     );
 
-    return files.map(uri => ({
+    // 模糊匹配：文件名包含查询词（不区分大小写）
+    const matchedFiles = allFiles
+      .filter(uri => {
+        const filename = path.basename(uri.fsPath).toLowerCase();
+        return filename.includes(lowerQuery);
+      })
+      .slice(0, 20); // 限制返回 20 个结果
+
+    return matchedFiles.map(uri => ({
       id: uri.fsPath,
       title: path.basename(uri.fsPath),
       description: vscode.workspace.asRelativePath(uri),

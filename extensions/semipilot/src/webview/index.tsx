@@ -8,6 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import './styles.css';
+import 'highlight.js/styles/github-dark.css'; // 代码高亮主题
 
 // 先获取 VS Code API（只能调用一次），并保存到 window 对象
 try {

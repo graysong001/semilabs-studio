@@ -5,6 +5,9 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { TipTapEditor, TipTapEditorRef } from './TipTapEditor';
 import { SlashCommandHandler } from './SlashCommandHandler';
 
@@ -13,6 +16,7 @@ interface Message {
   content: string;
   isUser: boolean;
   timestamp: number;
+  contextItems?: ContextItem[]; // 添加上下文项
 }
 
 interface ContextItem {
@@ -28,6 +32,7 @@ export const App: React.FC = () => {
   const [model, setModel] = useState('qwen');
   const [hasContent, setHasContent] = useState(false); // 追踪输入框是否有内容
   const [isWaiting, setIsWaiting] = useState(false); // 等待AI回复
+  const [waitingTime, setWaitingTime] = useState(0); // 等待时长（秒）
   const [isStopped, setIsStopped] = useState(false); // 🐛 用户是否点击了停止
   const vscodeRef = React.useRef<VsCodeApi | null>(null);
   const editorRef = React.useRef<TipTapEditorRef>(null); // TipTap Editor 引用
@@ -35,10 +40,28 @@ export const App: React.FC = () => {
   
   // 保存 Context Provider 查询的 Promise resolvers
   const contextQueryResolversRef = React.useRef<Map<string, (results: ContextItem[]) => void>>(new Map());
+  // 通过外部命令注入的上下文项（例如：从当前活动文件注入）
+  const [externalContextItems, setExternalContextItems] = useState<ContextItem[]>([]);
 
   useEffect(() => {
     console.log('[App] 🔄 Render state: isWaiting =', isWaiting, ', messages.length =', messages.length);
   }, [isWaiting, messages]);
+
+  // 计时器：等待 AI 回复时每秒更新
+  useEffect(() => {
+    if (!isWaiting) {
+      setWaitingTime(0);
+      return;
+    }
+
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      setWaitingTime(elapsed);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isWaiting]);
 
   useEffect(() => {
     // 从 window.__vscodeApi 获取已保存的 VS Code API 实例
@@ -147,6 +170,38 @@ export const App: React.FC = () => {
             }
           }
           break;
+        case 'addContextFromFile': {
+          const filePath: string | undefined = message.filePath;
+          if (!filePath) {
+            console.warn('[App] addContextFromFile message missing filePath');
+            break;
+          }
+
+          const label = filePath.split(/[/\\]/).pop() || filePath;
+          const newItem: ContextItem = {
+            id: filePath,
+            label,
+            type: 'file',
+            description: filePath,
+          };
+
+          setExternalContextItems(prev => {
+            const exists = prev.some(item => item.id === newItem.id && item.type === newItem.type);
+            if (exists) {
+              return prev;
+            }
+            return [...prev, newItem];
+          });
+
+          const infoMsg: Message = {
+            id: Date.now().toString(),
+            content: `📎 已将当前文件加入上下文：${label}`,
+            isUser: false,
+            timestamp: Date.now(),
+          };
+          setMessages(prev => [...prev, infoMsg]);
+          break;
+        }
       }
     };
     
@@ -167,12 +222,23 @@ export const App: React.FC = () => {
     // 🐛 发送新消息时重置isStopped标记
     setIsStopped(false);
     
+    // 合并 TipTap 提及和外部注入的上下文
+    const mergedContextMap = new Map<string, ContextItem>();
+    [...contextItems, ...externalContextItems].forEach(item => {
+      const key = `${item.type}:${item.id}`;
+      if (!mergedContextMap.has(key)) {
+        mergedContextMap.set(key, item);
+      }
+    });
+    const allContextItems = Array.from(mergedContextMap.values());
+    
     // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
       isUser: true,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      contextItems: allContextItems.length > 0 ? allContextItems : undefined, // 保存上下文
     };
     setMessages(prev => [...prev, userMessage]);
     setIsWaiting(true); // 开始等待AI回复
@@ -182,7 +248,7 @@ export const App: React.FC = () => {
       vscodeRef.current.postMessage({
         type: 'userMessage',
         message: content,
-        contextItems,
+        contextItems: allContextItems,
         agent,
         model
       });
@@ -190,7 +256,7 @@ export const App: React.FC = () => {
     
     // 发送后重置内容状态
     setHasContent(false);
-  }, [agent, model]);
+  }, [agent, model, externalContextItems]);
 
   const handleContextProvider = useCallback(async (type: string, query: string): Promise<ContextItem[]> => {
     if (!vscodeRef.current) {
@@ -225,6 +291,7 @@ export const App: React.FC = () => {
     setMessages([]);
     setIsWaiting(false); // 清除加载状态
     setIsStopped(false); // 🐛 清除停止标记
+    setExternalContextItems([]); // 清空外部注入的上下文
     if (vscodeRef.current) {
       vscodeRef.current.postMessage({ type: 'newChat' });
     }
@@ -309,8 +376,50 @@ export const App: React.FC = () => {
         ) : (
           <>
             {messages.map(msg => (
-              <div key={msg.id} className="message">
-                <div className="message-content">{msg.content}</div>
+              <div key={msg.id} className={`message ${msg.isUser ? 'user-message' : 'assistant-message'}`}>
+                <div className="message-content">
+                  {msg.isUser ? (
+                    // 用户消息：直接显示文本
+                    <>
+                      <div className="user-text">{msg.content}</div>
+                      {/* 显示上下文文件列表 */}
+                      {msg.contextItems && msg.contextItems.length > 0 && (
+                        <div className="context-files">
+                          {msg.contextItems.map((item, index) => (
+                            <span key={index} className="context-file-badge">
+                              {item.type === 'spec' ? '📄' : '📁'} {item.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // AI 回复：Markdown 渲染
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeHighlight]}
+                      components={{
+                        code(props: any) {
+                          const { node, inline, className, children, ...rest } = props;
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline && match ? (
+                            <pre className={`language-${match[1]}`}>
+                              <code className={className} {...rest}>
+                                {children}
+                              </code>
+                            </pre>
+                          ) : (
+                            <code className={className} {...rest}>
+                              {children}
+                            </code>
+                          );
+                        },
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  )}
+                </div>
                 <div className="message-actions">
                   <button className="message-copy-btn" onClick={() => copyMessage(msg.content)} title="Copy message">
                     📋
@@ -318,13 +427,16 @@ export const App: React.FC = () => {
                 </div>
               </div>
             ))}
-            {/* 加载动画（GitHub Copilot风格） */}
+            {/* 加载动画（GitHub Copilot风格 + 计时器） */}
             {isWaiting && (
               <div className="message loading-message">
-                <div className="loading-dots">
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
+                <div className="loading-content">
+                  <div className="loading-dots">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
+                  <span className="loading-timer">{waitingTime}s</span>
                 </div>
               </div>
             )}
