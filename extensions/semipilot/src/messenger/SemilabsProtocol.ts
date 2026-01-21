@@ -121,6 +121,49 @@ export interface WorkflowEvent {
 }
 
 /**
+ * Draft API Types (Slice 4)
+ */
+export interface UpsertDraftRequest {
+  sessionId: string;
+  content: string;
+  type?: 'OBJECTIVE' | 'CONSTRAINT' | 'QUESTION';
+}
+
+export interface ClearDraftRequest {
+  sessionId: string;
+}
+
+export interface DraftResponse {
+  success: boolean;
+  data?: WorkflowEvent;
+  error?: string;
+}
+
+/**
+ * Workflow API Types (Slice 4)
+ */
+export interface SubmitWorkflowRequest {
+  filePath: string;
+}
+
+export interface VetoWorkflowRequest {
+  filePath: string;
+  reason: string;
+  suggestion?: string;
+}
+
+export interface ResolveWorkflowRequest {
+  filePath: string;
+  userApproved: boolean;
+}
+
+export interface WorkflowResponse {
+  success: boolean;
+  data?: WorkflowEvent;
+  error?: string;
+}
+
+/**
  * Approval Types
  */
 export interface ApprovalRequest {
@@ -145,6 +188,15 @@ export interface FromExtensionProtocol extends IProtocol {
   'chat/send-message': [{ sessionId: string; request: ChatRequest }, ChatMessage]; // Slice 1: 同步返回
   'chat/get-sessions': [{ limit?: number; offset?: number }, { sessions: ChatSession[]; total: number }];
   'chat/get-history': [{ sessionId: string; limit?: number; offset?: number }, { messages: ChatMessage[]; total: number }];
+  
+  // Draft API (Slice 4)
+  'draft/upsert': [UpsertDraftRequest, DraftResponse];
+  'draft/clear': [ClearDraftRequest, DraftResponse];
+  
+  // Workflow API (Slice 4)
+  'workflow/submit': [SubmitWorkflowRequest, WorkflowResponse];
+  'workflow/veto': [VetoWorkflowRequest, WorkflowResponse];
+  'workflow/resolve': [ResolveWorkflowRequest, WorkflowResponse];
   
   // Tool Execution
   'tool/execute': [ToolExecutionRequest, { executionId: string; status: string; requiresApproval: boolean }];

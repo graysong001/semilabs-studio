@@ -323,6 +323,14 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       'chat/send-message': { method: 'POST', path: '/chat/sessions/:sessionId/messages' }, // Slice 1: 非SSE版本
       'chat/get-sessions': { method: 'GET', path: '/chat/sessions' },
       'chat/get-history': { method: 'GET', path: '/chat/sessions/:sessionId/messages' },
+      // Draft API (Slice 4)
+      'draft/upsert': { method: 'POST', path: '/api/v1/draft/upsert' },
+      'draft/clear': { method: 'POST', path: '/api/v1/draft/clear' },
+      // Workflow API (Slice 4)
+      'workflow/submit': { method: 'POST', path: '/api/v1/workflow/submit' },
+      'workflow/veto': { method: 'POST', path: '/api/v1/workflow/veto' },
+      'workflow/resolve': { method: 'POST', path: '/api/v1/workflow/resolve' },
+      // Tool & Approval
       'tool/execute': { method: 'POST', path: '/tools/execute' },
       'tool/get-status': { method: 'GET', path: '/tools/executions/:executionId' },
       'approval/approve': { method: 'POST', path: '/approvals/:executionId/approve' },
