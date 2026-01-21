@@ -51,9 +51,11 @@
     "watch:webview": "node esbuild.js --watch",
     "test": "node ./out/test/runTest.js",
     "test:backend": "npm run compile && npx mocha out/test/backend-integration.test.js --timeout 60000",
+    "test:workflow": "npm run compile && npx mocha out/test/workflow-integration.test.js --timeout 60000",
+    "test:workflow-e2e": "npm run compile && npx mocha out/test/workflow-e2e.test.js --timeout 60000",
     "test:auto": "node test/automated/full-coverage-test.js",
     "test:slash": "node verify-slash.js",
-    "test:all": "npm run compile && npm run test:auto && npm run test:slash"
+    "test:all": "npm run compile && npm run test:auto && npm run test:slash && npm run test:workflow"
   },
   "devDependencies": {
     "@types/eventsource": "^1.1.15",

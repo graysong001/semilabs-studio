@@ -110,6 +110,17 @@ export interface ToolExecutionEvent {
 }
 
 /**
+ * Workflow Event Types (Slice 4)
+ */
+export interface WorkflowEvent {
+  type: 'DRAFT_UPDATED' | 'PROPOSAL_READY' | 'REVIEW_SUBMITTED' | 'VETO_APPLIED' | 'FIX_SUBMITTED' | 'WORKFLOW_APPROVED';
+  target: string; // Spec 文件路径
+  workflowState: string; // 当前 workflow_state
+  payload?: Record<string, any>; // 附加信息（如 veto reason/suggestion）
+  timestamp?: string;
+}
+
+/**
  * Approval Types
  */
 export interface ApprovalRequest {
@@ -155,6 +166,9 @@ export interface ToExtensionProtocol extends IProtocol {
   'domain-graph/update': [DomainGraphUpdate, void];
   'chat/event': [ChatEvent, void];
   'tool/event': [{ executionId: string; event: ToolExecutionEvent }, void];
+  
+  // Workflow Events (Slice 4 - 独立 SSE 通道)
+  'workflow/event': [WorkflowEvent, void];
   
   // Notifications
   'notification/show': [{ type: 'info' | 'warning' | 'error'; message: string }, void];

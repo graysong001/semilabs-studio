@@ -71,6 +71,12 @@ export function activate(context: vscode.ExtensionContext) {
     
     vscode.window.showInformationMessage('Semipilot Chat Panel opened');
     
+    // Slice 4: 启动 Workflow SSE 连接
+    if (!messenger.isWorkflowConnectedToBackend()) {
+      console.log('[Semipilot] Connecting to Workflow SSE...');
+      messenger.connectWorkflow();
+    }
+    
     // TODO: Remove this test code after Phase 1 Week 2
     // Test: Send Hello World to Backend
     try {

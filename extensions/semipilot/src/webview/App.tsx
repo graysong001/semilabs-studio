@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { TipTapEditor, TipTapEditorRef } from './TipTapEditor';
 import { SlashCommandHandler } from './SlashCommandHandler';
+import { WorkflowCard } from './WorkflowCard';
 
 interface Message {
   id: string;
@@ -321,6 +322,57 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  /**
+   * 处理 Workflow 操作（Submit / Veto / Resolve）
+   * Slice 4: 调用后端 API 并在 Chat 流中插入操作卡片
+   */
+  const handleWorkflowAction = useCallback((action: 'submit' | 'veto' | 'resolve', target: string, params?: any) => {
+    console.log('[App] Workflow action:', action, target, params);
+    
+    // 1. 发送到 Extension Host
+    if (vscodeRef.current) {
+      vscodeRef.current.postMessage({
+        type: 'workflowAction',
+        action,
+        target,
+        params,
+      });
+    }
+    
+    // 2. 在 Chat 流中插入操作卡片（类似 Tool Card）
+    const actionNames: Record<string, string> = {
+      submit: 'Submit for Review',
+      veto: 'Veto',
+      resolve: 'Resolve',
+    };
+    
+    const fileName = target.split(/[\/\\]/).pop() || target;
+    let operationDetail = '';
+    
+    if (action === 'veto' && params?.reason) {
+      operationDetail = `\n**原因**: ${params.reason}`;
+      if (params.suggestion) {
+        operationDetail += `\n**建议**: ${params.suggestion}`;
+      }
+    } else if (action === 'resolve') {
+      operationDetail = '\n✅ 用户确认已修复';
+    }
+    
+    const operationMsg: Message = {
+      id: Date.now().toString(),
+      content: `🛠️ **Workflow 操作**
+
+操作: **${actionNames[action]}**
+目标: \`${fileName}\`${operationDetail}
+
+⏳ 正在处理...`,
+      isUser: false,
+      timestamp: Date.now(),
+    };
+    
+    setMessages(prev => [...prev, operationMsg]);
+  }, []);
+
   return (
     <div className="app-container">
       {/* 顶部标题栏 */}
@@ -438,6 +490,9 @@ export const App: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Workflow Card - 位于消息列表和输入框之间 */}
+      <WorkflowCard onAction={handleWorkflowAction} />
 
       {/* 底部输入区域 - 参考 Continue 样式 */}
       <div className="input-container">

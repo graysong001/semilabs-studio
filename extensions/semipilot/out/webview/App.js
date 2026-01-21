@@ -48,6 +48,7 @@ const remark_gfm_1 = __importDefault(require("remark-gfm"));
 const rehype_highlight_1 = __importDefault(require("rehype-highlight"));
 const TipTapEditor_1 = require("./TipTapEditor");
 const SlashCommandHandler_1 = require("./SlashCommandHandler");
+const WorkflowCard_1 = require("./WorkflowCard");
 const App = () => {
     const [messages, setMessages] = (0, react_1.useState)([]);
     const [agent, setAgent] = (0, react_1.useState)('poe');
@@ -306,6 +307,51 @@ const App = () => {
             });
         }
     }, []);
+    /**
+     * 处理 Workflow 操作（Submit / Veto / Resolve）
+     * Slice 4: 调用后端 API 并在 Chat 流中插入操作卡片
+     */
+    const handleWorkflowAction = (0, react_1.useCallback)((action, target, params) => {
+        console.log('[App] Workflow action:', action, target, params);
+        // 1. 发送到 Extension Host
+        if (vscodeRef.current) {
+            vscodeRef.current.postMessage({
+                type: 'workflowAction',
+                action,
+                target,
+                params,
+            });
+        }
+        // 2. 在 Chat 流中插入操作卡片（类似 Tool Card）
+        const actionNames = {
+            submit: 'Submit for Review',
+            veto: 'Veto',
+            resolve: 'Resolve',
+        };
+        const fileName = target.split(/[\/\\]/).pop() || target;
+        let operationDetail = '';
+        if (action === 'veto' && params?.reason) {
+            operationDetail = `\n**原因**: ${params.reason}`;
+            if (params.suggestion) {
+                operationDetail += `\n**建议**: ${params.suggestion}`;
+            }
+        }
+        else if (action === 'resolve') {
+            operationDetail = '\n✅ 用户确认已修复';
+        }
+        const operationMsg = {
+            id: Date.now().toString(),
+            content: `🛠️ **Workflow 操作**
+
+操作: **${actionNames[action]}**
+目标: \`${fileName}\`${operationDetail}
+
+⏳ 正在处理...`,
+            isUser: false,
+            timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, operationMsg]);
+    }, []);
     return (react_1.default.createElement("div", { className: "app-container" },
         react_1.default.createElement("div", { className: "header" },
             react_1.default.createElement("div", { className: "header-left" },
@@ -361,6 +407,7 @@ const App = () => {
                     react_1.default.createElement("span", { className: "loading-timer" },
                         waitingTime,
                         "s"))))))),
+        react_1.default.createElement(WorkflowCard_1.WorkflowCard, { onAction: handleWorkflowAction }),
         react_1.default.createElement("div", { className: "input-container" },
             react_1.default.createElement("div", { className: "input-wrapper" },
                 react_1.default.createElement("div", { className: "input-header" },

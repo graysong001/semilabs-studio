@@ -13,7 +13,7 @@ import * as vscode from 'vscode';
 import { ContextProviderManager } from '../context/ContextProviderManager';
 import { TaskContextProvider, TaskDocument, Priority, TaskStatus } from '../context/TaskContextProvider';
 import { SseMessenger } from '../messenger/SseMessenger';
-import type { ContextItem as ChatContextItem } from '../messenger/SemilabsProtocol';
+import type { ContextItem as ChatContextItem, WorkflowEvent } from '../messenger/SemilabsProtocol';
 
 export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'semipilot.chatView';
@@ -45,6 +45,11 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
     if (workspaceRoot) {
       this._taskProvider = new TaskContextProvider(workspaceRoot);
     }
+
+    // 监听 Workflow SSE 事件
+    this._messenger.on('workflow/event', (message) => {
+      this._handleWorkflowEvent(message.data);
+    });
   }
 
   public resolveWebviewView(
@@ -106,10 +111,123 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
         case 'moreOptions':
           console.log('[SemipilotWebviewProvider] More options requested');
           break;
+        case 'workflowAction':
+          // Slice 4: 处理 Workflow 操作（Submit / Veto / Resolve）
+          this._handleWorkflowAction(data.action, data.target, data.params);
+          break;
       }
     });
 
     console.log('[SemipilotWebviewProvider] Webview fully initialized');
+  }
+
+  /**
+   * 处理 Workflow SSE 事件
+   * Slice 4: 转发给 webview，由 WorkflowCard 组件处理
+   */
+  private _handleWorkflowEvent(event: WorkflowEvent): void {
+    console.log('[SemipilotWebviewProvider] Workflow event received:', event);
+    
+    if (!this._view) {
+      console.warn('[SemipilotWebviewProvider] Webview not ready, skipping workflow event');
+      return;
+    }
+    
+    // 转发给 webview
+    this._view.webview.postMessage({
+      type: 'workflowEvent',
+      event: {
+        type: event.type,
+        target: event.target,
+        workflowState: event.workflowState,
+        payload: event.payload,
+        timestamp: event.timestamp || new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * 处理 Workflow 操作（Submit / Veto / Resolve）
+   * Slice 4: 调用后端 Workflow REST API
+   */
+  private async _handleWorkflowAction(action: 'submit' | 'veto' | 'resolve', target: string, params?: any): Promise<void> {
+    console.log('[SemipilotWebviewProvider] Workflow action:', action, target, params);
+    
+    try {
+      let endpoint: string;
+      let body: any;
+      
+      switch (action) {
+        case 'submit':
+          endpoint = 'workflow/submit';
+          body = { filePath: target };
+          break;
+        case 'veto':
+          endpoint = 'workflow/veto';
+          body = {
+            filePath: target,
+            reason: params?.reason || '需要修改',
+            suggestion: params?.suggestion,
+          };
+          break;
+        case 'resolve':
+          endpoint = 'workflow/resolve';
+          body = {
+            filePath: target,
+            userApproved: params?.userApproved !== false,
+          };
+          break;
+        default:
+          throw new Error(`Unknown workflow action: ${action}`);
+      }
+      
+      // 调用后端 API（通过 SseMessenger）
+      // 注：这里需要在 SseMessenger 中新增对 Workflow REST API 的支持
+      // 暂时直接使用 fetch
+      const baseUrl = process.env.SEMILABS_BACKEND_URL || 'http://localhost:8080/api/v1';
+      const response = await fetch(`${baseUrl}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('[SemipilotWebviewProvider] Workflow action result:', result);
+      
+      // 发送成功消息给 webview
+      this._view?.webview.postMessage({
+        type: 'assistantMessage',
+        message: {
+          id: Date.now().toString(),
+          content: `✅ Workflow 操作成功：**${action}**
+
+目标：\`${target.split(/[\/\\]/).pop()}\`
+状态：${result.data?.workflowState || '已更新'}`,
+          isUser: false,
+          timestamp: Date.now(),
+        },
+      });
+      
+    } catch (error) {
+      console.error('[SemipilotWebviewProvider] Workflow action error:', error);
+      
+      // 发送错误消息给 webview
+      this._view?.webview.postMessage({
+        type: 'assistantMessage',
+        message: {
+          id: Date.now().toString(),
+          content: `❌ Workflow 操作失败：${error instanceof Error ? error.message : String(error)}`,
+          isUser: false,
+          timestamp: Date.now(),
+        },
+      });
+    }
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
