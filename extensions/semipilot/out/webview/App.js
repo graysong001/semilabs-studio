@@ -49,6 +49,9 @@ const rehype_highlight_1 = __importDefault(require("rehype-highlight"));
 const TipTapEditor_1 = require("./TipTapEditor");
 const SlashCommandHandler_1 = require("./SlashCommandHandler");
 const WorkflowCard_1 = require("./WorkflowCard");
+const DraftStagingWidget_1 = require("./DraftStagingWidget");
+const IntentProposalCard_1 = require("./IntentProposalCard");
+const TribunalCard_1 = require("./TribunalCard");
 const App = () => {
     const [messages, setMessages] = (0, react_1.useState)([]);
     const [agent, setAgent] = (0, react_1.useState)('poe');
@@ -60,6 +63,9 @@ const App = () => {
     const vscodeRef = react_1.default.useRef(null);
     const editorRef = react_1.default.useRef(null); // TipTap Editor 引用
     const slashHandlerRef = (0, react_1.useRef)(new SlashCommandHandler_1.SlashCommandHandler());
+    // Slice 4: Workflow 事件状态
+    const [proposalCardData, setProposalCardData] = (0, react_1.useState)(null);
+    const [tribunalCardData, setTribunalCardData] = (0, react_1.useState)(null);
     // 保存 Context Provider 查询的 Promise resolvers
     const contextQueryResolversRef = react_1.default.useRef(new Map());
     // 通过外部命令注入的上下文项（例如：从当前活动文件注入）
@@ -133,6 +139,33 @@ const App = () => {
                             timestamp: message.message.timestamp || Date.now()
                         };
                         setMessages(prev => [...prev, assistantMsg]);
+                    }
+                    break;
+                case 'workflowEvent':
+                    // Slice 4: 处理 Workflow 事件
+                    const workflowEvent = message.event;
+                    if (workflowEvent.type === 'PROPOSAL_READY') {
+                        // 显示 IntentProposalCard
+                        setProposalCardData({
+                            summary: workflowEvent.payload?.summary || 'Draft is ready to be crystallized into a formal Spec.',
+                            targetFile: workflowEvent.target,
+                            confidence: workflowEvent.payload?.confidence || 0,
+                        });
+                    }
+                    else if (workflowEvent.type === 'VETO_APPLIED' || workflowEvent.type === 'FIX_SUBMITTED') {
+                        // 显示 TribunalCard
+                        setTribunalCardData({
+                            vetoReason: workflowEvent.payload?.reason || 'Architecture constraint violated',
+                            vetoRequirement: workflowEvent.payload?.suggestion || workflowEvent.payload?.requirement,
+                            fixSummary: workflowEvent.payload?.fixSummary,
+                            targetFile: workflowEvent.target,
+                            workflowState: workflowEvent.workflowState,
+                        });
+                    }
+                    else if (workflowEvent.type === 'WORKFLOW_APPROVED') {
+                        // 清除卡片
+                        setProposalCardData(null);
+                        setTribunalCardData(null);
                     }
                     break;
                 case 'contextProviderResults':
@@ -352,6 +385,67 @@ const App = () => {
         };
         setMessages(prev => [...prev, operationMsg]);
     }, []);
+    /**
+     * Slice 4: 处理 Generate Spec 操作
+     */
+    const handleGenerateSpec = (0, react_1.useCallback)(async (targetFile) => {
+        console.log('[App] Generate Spec:', targetFile);
+        if (vscodeRef.current) {
+            vscodeRef.current.postMessage({
+                type: 'commitDraft',
+                targetFile,
+            });
+        }
+        // 清除 Proposal Card
+        setProposalCardData(null);
+        // 在 Chat 流中插入操作卡片
+        const fileName = targetFile.split(/[\/\\]/).pop() || targetFile;
+        const operationMsg = {
+            id: Date.now().toString(),
+            content: `🚀 **Generate Spec**
+
+目标: \`${fileName}\`
+
+⏳ 正在生成 Spec...`,
+            isUser: false,
+            timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, operationMsg]);
+    }, []);
+    /**
+     * Slice 4: 处理 Approve Fix 操作
+     */
+    const handleApproveFix = (0, react_1.useCallback)(async (targetFile) => {
+        console.log('[App] Approve Fix:', targetFile);
+        // 调用 Workflow Resolve API
+        handleWorkflowAction('resolve', targetFile, { userApproved: true });
+        // 清除 Tribunal Card
+        setTribunalCardData(null);
+    }, [handleWorkflowAction]);
+    /**
+     * Slice 4: 处理 View Diff 操作
+     */
+    const handleViewDiff = (0, react_1.useCallback)((targetFile) => {
+        console.log('[App] View Diff:', targetFile);
+        if (vscodeRef.current) {
+            vscodeRef.current.postMessage({
+                type: 'viewDiff',
+                filePath: targetFile,
+            });
+        }
+    }, []);
+    /**
+     * Slice 4: 处理 Open File 操作
+     */
+    const handleOpenFile = (0, react_1.useCallback)((filePath) => {
+        console.log('[App] Open File:', filePath);
+        if (vscodeRef.current) {
+            vscodeRef.current.postMessage({
+                type: 'openFile',
+                filePath,
+            });
+        }
+    }, []);
     return (react_1.default.createElement("div", { className: "app-container" },
         react_1.default.createElement("div", { className: "header" },
             react_1.default.createElement("div", { className: "header-left" },
@@ -406,7 +500,10 @@ const App = () => {
                         react_1.default.createElement("span", { className: "dot" })),
                     react_1.default.createElement("span", { className: "loading-timer" },
                         waitingTime,
-                        "s"))))))),
+                        "s")))),
+            proposalCardData && (react_1.default.createElement(IntentProposalCard_1.IntentProposalCard, { summary: proposalCardData.summary, targetFile: proposalCardData.targetFile, confidence: proposalCardData.confidence, onGenerate: handleGenerateSpec, onCancel: () => setProposalCardData(null) })),
+            tribunalCardData && (react_1.default.createElement(TribunalCard_1.TribunalCard, { vetoReason: tribunalCardData.vetoReason, vetoRequirement: tribunalCardData.vetoRequirement, fixSummary: tribunalCardData.fixSummary, targetFile: tribunalCardData.targetFile, workflowState: tribunalCardData.workflowState, onViewDiff: handleViewDiff, onApproveFix: handleApproveFix }))))),
+        react_1.default.createElement(DraftStagingWidget_1.DraftStagingWidget, { onOpenFile: handleOpenFile }),
         react_1.default.createElement(WorkflowCard_1.WorkflowCard, { onAction: handleWorkflowAction }),
         react_1.default.createElement("div", { className: "input-container" },
             react_1.default.createElement("div", { className: "input-wrapper" },

@@ -1089,7 +1089,7 @@
             }
             return dispatcher.useContext(Context);
           }
-          function useState5(initialState) {
+          function useState9(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -1101,7 +1101,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect5(create2, deps) {
+          function useEffect7(create2, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create2, deps);
           }
@@ -1884,7 +1884,7 @@
           exports.useContext = useContext2;
           exports.useDebugValue = useDebugValue2;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect5;
+          exports.useEffect = useEffect7;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -1892,7 +1892,7 @@
           exports.useMemo = useMemo;
           exports.useReducer = useReducer;
           exports.useRef = useRef4;
-          exports.useState = useState5;
+          exports.useState = useState9;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
           exports.version = ReactVersion;
@@ -2388,9 +2388,9 @@
           if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
             __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
           }
-          var React5 = require_react();
+          var React9 = require_react();
           var Scheduler = require_scheduler();
-          var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React9.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           var suppressWarning = false;
           function setSuppressWarning(newSuppressWarning) {
             {
@@ -3997,7 +3997,7 @@
             {
               if (props.value == null) {
                 if (typeof props.children === "object" && props.children !== null) {
-                  React5.Children.forEach(props.children, function(child) {
+                  React9.Children.forEach(props.children, function(child) {
                     if (child == null) {
                       return;
                     }
@@ -4493,15 +4493,15 @@
             };
           }
           var warnValidStyle$1 = warnValidStyle;
-          function createDangerousStringForStyles(styles) {
+          function createDangerousStringForStyles(styles5) {
             {
               var serialized = "";
               var delimiter = "";
-              for (var styleName in styles) {
-                if (!styles.hasOwnProperty(styleName)) {
+              for (var styleName in styles5) {
+                if (!styles5.hasOwnProperty(styleName)) {
                   continue;
                 }
-                var styleValue = styles[styleName];
+                var styleValue = styles5[styleName];
                 if (styleValue != null) {
                   var isCustomProperty = styleName.indexOf("--") === 0;
                   serialized += delimiter + (isCustomProperty ? styleName : hyphenateStyleName(styleName)) + ":";
@@ -4512,19 +4512,19 @@
               return serialized || null;
             }
           }
-          function setValueForStyles(node2, styles) {
+          function setValueForStyles(node2, styles5) {
             var style5 = node2.style;
-            for (var styleName in styles) {
-              if (!styles.hasOwnProperty(styleName)) {
+            for (var styleName in styles5) {
+              if (!styles5.hasOwnProperty(styleName)) {
                 continue;
               }
               var isCustomProperty = styleName.indexOf("--") === 0;
               {
                 if (!isCustomProperty) {
-                  warnValidStyle$1(styleName, styles[styleName]);
+                  warnValidStyle$1(styleName, styles5[styleName]);
                 }
               }
-              var styleValue = dangerousStyleValue(styleName, styles[styleName], isCustomProperty);
+              var styleValue = dangerousStyleValue(styleName, styles5[styleName], isCustomProperty);
               if (styleName === "float") {
                 styleName = "cssFloat";
               }
@@ -4538,9 +4538,9 @@
           function isValueEmpty(value) {
             return value == null || typeof value === "boolean" || value === "";
           }
-          function expandShorthandMap(styles) {
+          function expandShorthandMap(styles5) {
             var expanded = {};
-            for (var key in styles) {
+            for (var key in styles5) {
               var longhands = shorthandToLonghand[key] || [key];
               for (var i = 0; i < longhands.length; i++) {
                 expanded[longhands[i]] = key;
@@ -23831,7 +23831,7 @@
       if (true) {
         (function() {
           "use strict";
-          var React5 = require_react();
+          var React9 = require_react();
           var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.element");
           var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
           var REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment");
@@ -23857,7 +23857,7 @@
             }
             return null;
           }
-          var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React9.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           function error(format) {
             {
               {
@@ -26359,11 +26359,11 @@
   });
 
   // src/webview/index.tsx
-  var import_react7 = __toESM(require_react());
+  var import_react11 = __toESM(require_react());
   var import_client = __toESM(require_client());
 
   // src/webview/App.tsx
-  var import_react6 = __toESM(require_react());
+  var import_react10 = __toESM(require_react());
 
   // node_modules/devlop/lib/default.js
   function ok() {
@@ -55839,10 +55839,10 @@
     // return an updated array of marks, or null to indicate some of the
     // styles had a rule with `ignore` set.
     readStyles(dom, marks) {
-      let styles = dom.style;
-      if (styles && styles.length)
+      let styles5 = dom.style;
+      if (styles5 && styles5.length)
         for (let i = 0; i < this.parser.matchedStyles.length; i++) {
-          let name2 = this.parser.matchedStyles[i], value = styles.getPropertyValue(name2);
+          let name2 = this.parser.matchedStyles[i], value = styles5.getPropertyValue(name2);
           if (value)
             for (let after = void 0; ; ) {
               let rule = this.parser.matchStyle(name2, value, this, after);
@@ -72006,7 +72006,7 @@ img.ProseMirror-separator {
           return x === y && (x !== 0 || 1 / x === 1 / y) || x !== x && y !== y;
         }
         var objectIs = typeof Object.is === "function" ? Object.is : is2;
-        var useState5 = React$1.useState, useEffect5 = React$1.useEffect, useLayoutEffect2 = React$1.useLayoutEffect, useDebugValue2 = React$1.useDebugValue;
+        var useState9 = React$1.useState, useEffect7 = React$1.useEffect, useLayoutEffect2 = React$1.useLayoutEffect, useDebugValue2 = React$1.useDebugValue;
         var didWarnOld18Alpha = false;
         var didWarnUncachedGetSnapshot = false;
         function useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
@@ -72028,7 +72028,7 @@ img.ProseMirror-separator {
               }
             }
           }
-          var _useState = useState5({
+          var _useState = useState9({
             inst: {
               value,
               getSnapshot
@@ -72043,7 +72043,7 @@ img.ProseMirror-separator {
               });
             }
           }, [subscribe, value, getSnapshot]);
-          useEffect5(function() {
+          useEffect7(function() {
             if (checkIfSnapshotChanged(inst)) {
               forceUpdate({
                 inst
@@ -72310,7 +72310,7 @@ img.ProseMirror-separator {
         }
         var objectIs = typeof Object.is === "function" ? Object.is : is2;
         var useSyncExternalStore = shim2.useSyncExternalStore;
-        var useRef4 = React$1.useRef, useEffect5 = React$1.useEffect, useMemo = React$1.useMemo, useDebugValue2 = React$1.useDebugValue;
+        var useRef4 = React$1.useRef, useEffect7 = React$1.useEffect, useMemo = React$1.useMemo, useDebugValue2 = React$1.useDebugValue;
         function useSyncExternalStoreWithSelector(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
           var instRef = useRef4(null);
           var inst;
@@ -72367,7 +72367,7 @@ img.ProseMirror-separator {
             return [getSnapshotWithSelector, getServerSnapshotWithSelector];
           }, [getSnapshot, getServerSnapshot, selector, isEqual]), getSelection2 = _useMemo[0], getServerSelection = _useMemo[1];
           var value = useSyncExternalStore(subscribe, getSelection2, getServerSelection);
-          useEffect5(function() {
+          useEffect7(function() {
             inst.hasValue = true;
             inst.value = value;
           }, [value]);
@@ -75727,21 +75727,908 @@ img.ProseMirror-separator {
     }
   };
 
+  // src/webview/WorkflowCard.tsx
+  var import_react6 = __toESM(require_react());
+  var WorkflowCard = ({ onAction }) => {
+    const [isExpanded, setIsExpanded] = (0, import_react6.useState)(false);
+    const [currentEvent, setCurrentEvent] = (0, import_react6.useState)(null);
+    const [recentEvents, setRecentEvents] = (0, import_react6.useState)([]);
+    const [isConnected, setIsConnected] = (0, import_react6.useState)(false);
+    (0, import_react6.useEffect)(() => {
+      const handleMessage = (event) => {
+        const message = event.data;
+        if (message.type === "workflowEvent") {
+          const workflowEvent = message.event;
+          setCurrentEvent(workflowEvent);
+          setRecentEvents((prev) => {
+            const updated = [workflowEvent, ...prev].slice(0, 5);
+            return updated;
+          });
+          if (workflowEvent.workflowState === "REJECTED" || workflowEvent.workflowState === "FIXING") {
+            setIsExpanded(true);
+          }
+          setIsConnected(true);
+        }
+      };
+      window.addEventListener("message", handleMessage);
+      return () => window.removeEventListener("message", handleMessage);
+    }, []);
+    const getStatusDisplay = (event) => {
+      if (!event) {
+        return {
+          text: "\u7B49\u5F85 Workflow \u4E8B\u4EF6...",
+          color: "#888",
+          icon: "\u23F3",
+          animate: false
+        };
+      }
+      switch (event.type) {
+        case "DRAFT_UPDATED":
+          return {
+            text: "\u{1F4DD} \u8349\u7A3F\u66F4\u65B0\u4E2D...",
+            color: "#A569BD",
+            icon: "\u{1F4DD}",
+            animate: false
+          };
+        case "REVIEW_SUBMITTED":
+          return {
+            text: "\u{1F504} \u5DF2\u63D0\u4EA4\u7ED9 Archi \u5BA1\u6279",
+            color: "#BB8FCE",
+            icon: "\u{1F504}",
+            animate: true
+            // 呼吸 + 旋转
+          };
+        case "VETO_APPLIED":
+          return {
+            text: "\u274C Archi \u6253\u56DE - \u9700\u4FEE\u590D",
+            color: "#E74C3C",
+            icon: "\u274C",
+            animate: false
+          };
+        case "FIX_SUBMITTED":
+          return {
+            text: "\u{1F527} \u4FEE\u590D\u4E2D\uFF0C\u5F85\u91CD\u65B0\u5BA1\u6279",
+            color: "#A569BD",
+            icon: "\u{1F527}",
+            animate: false
+          };
+        case "WORKFLOW_APPROVED":
+          return {
+            text: "\u2705 Archi \u5DF2\u6279\u51C6",
+            color: "#27AE60",
+            icon: "\u2705",
+            animate: false
+          };
+        default:
+          return {
+            text: event.workflowState,
+            color: "#8E44AD",
+            icon: "\u{1F4CB}",
+            animate: false
+          };
+      }
+    };
+    const statusDisplay = getStatusDisplay(currentEvent);
+    const getFileName = (filePath) => {
+      return filePath.split(/[/\\]/).pop() || filePath;
+    };
+    const handleAction = (action) => {
+      if (!currentEvent) return;
+      let params = {};
+      if (action === "veto") {
+        const reason = prompt("\u8BF7\u8F93\u5165 Veto \u539F\u56E0\uFF1A");
+        if (!reason) return;
+        params.reason = reason;
+        params.suggestion = prompt("\u8BF7\u8F93\u5165\u6539\u8FDB\u5EFA\u8BAE\uFF08\u53EF\u9009\uFF09\uFF1A") || "";
+      } else if (action === "resolve") {
+        const confirmed = confirm("\u786E\u8BA4\u5DF2\u4FEE\u590D\u95EE\u9898\uFF1F");
+        if (!confirmed) return;
+        params.userApproved = true;
+      }
+      onAction(action, currentEvent.target, params);
+    };
+    if (!currentEvent && !isConnected) {
+      return null;
+    }
+    return /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.container }, /* @__PURE__ */ import_react6.default.createElement(
+      "div",
+      {
+        style: {
+          ...styles.header,
+          backgroundColor: isExpanded ? "#2D2D30" : "#252526"
+        },
+        onClick: () => setIsExpanded(!isExpanded)
+      },
+      /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.expandIcon }, isExpanded ? "\u25BC" : "\u25B8"),
+      /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.title }, "Workflow"),
+      /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.separator }, "|"),
+      /* @__PURE__ */ import_react6.default.createElement(
+        "span",
+        {
+          style: {
+            ...styles.statusText,
+            color: statusDisplay.color,
+            animation: statusDisplay.animate ? "breathe 2s ease-in-out infinite" : "none"
+          }
+        },
+        statusDisplay.icon,
+        " ",
+        statusDisplay.text
+      ),
+      currentEvent && /* @__PURE__ */ import_react6.default.createElement(import_react6.default.Fragment, null, /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.separator }, "|"), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.fileName }, getFileName(currentEvent.target)), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.separator }, "\u2022"), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.state }, currentEvent.workflowState)),
+      /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.separator }, "|"),
+      /* @__PURE__ */ import_react6.default.createElement("span", { style: {
+        ...styles.connectionStatus,
+        color: isConnected ? "#27AE60" : "#888"
+      } }, isConnected ? "\u25CF Live" : "\u25CB Disconnected")
+    ), isExpanded && currentEvent && /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.content }, /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.overview }, /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.overviewRow }, /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.label }, "\u5F53\u524D\u9636\u6BB5\uFF1A"), /* @__PURE__ */ import_react6.default.createElement("span", { style: { color: statusDisplay.color, fontWeight: "bold" } }, currentEvent.workflowState)), currentEvent.timestamp && /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.overviewRow }, /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.label }, "\u6700\u8FD1\u66F4\u65B0\uFF1A"), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timestamp }, new Date(currentEvent.timestamp).toLocaleString()))), recentEvents.length > 0 && /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.timeline }, /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.timelineTitle }, "\u6700\u8FD1\u4E8B\u4EF6"), recentEvents.map((event, index2) => /* @__PURE__ */ import_react6.default.createElement("div", { key: `${event.timestamp}-${index2}`, style: styles.timelineItem }, /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timelineIcon }, getStatusDisplay(event).icon), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timelineType }, event.type), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timelineSeparator }, "-"), /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timelineTarget }, getFileName(event.target)), event.timestamp && /* @__PURE__ */ import_react6.default.createElement("span", { style: styles.timelineTime }, new Date(event.timestamp).toLocaleTimeString())))), /* @__PURE__ */ import_react6.default.createElement("div", { style: styles.actions }, /* @__PURE__ */ import_react6.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles.button,
+          ...styles.buttonSubmit
+        },
+        onClick: () => handleAction("submit"),
+        disabled: currentEvent.workflowState === "PENDING_REVIEW" || currentEvent.workflowState === "DESIGNED"
+      },
+      "Submit for Review"
+    ), /* @__PURE__ */ import_react6.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles.button,
+          ...styles.buttonVeto
+        },
+        onClick: () => handleAction("veto")
+      },
+      "Veto"
+    ), /* @__PURE__ */ import_react6.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles.button,
+          ...styles.buttonResolve
+        },
+        onClick: () => handleAction("resolve"),
+        disabled: currentEvent.workflowState !== "REJECTED" && currentEvent.workflowState !== "FIXING"
+      },
+      "Resolve"
+    ))));
+  };
+  var styles = {
+    container: {
+      backgroundColor: "#252526",
+      border: "1px solid #3E3E42",
+      borderRadius: "4px",
+      marginBottom: "12px",
+      overflow: "hidden",
+      fontFamily: "var(--vscode-font-family)",
+      fontSize: "13px"
+    },
+    header: {
+      display: "flex",
+      alignItems: "center",
+      padding: "8px 12px",
+      cursor: "pointer",
+      userSelect: "none",
+      transition: "background-color 0.2s"
+    },
+    expandIcon: {
+      marginRight: "8px",
+      color: "#CCCCCC",
+      fontSize: "12px"
+    },
+    title: {
+      fontWeight: "bold",
+      color: "#CCCCCC",
+      marginRight: "8px"
+    },
+    separator: {
+      color: "#666",
+      margin: "0 6px"
+    },
+    statusText: {
+      fontWeight: "500",
+      flex: 1
+    },
+    fileName: {
+      color: "#CCCCCC",
+      fontSize: "12px"
+    },
+    state: {
+      color: "#888",
+      fontSize: "11px"
+    },
+    connectionStatus: {
+      fontSize: "11px",
+      fontWeight: "bold"
+    },
+    content: {
+      padding: "12px",
+      borderTop: "1px solid #3E3E42"
+    },
+    overview: {
+      marginBottom: "12px"
+    },
+    overviewRow: {
+      marginBottom: "4px"
+    },
+    label: {
+      color: "#888",
+      marginRight: "8px"
+    },
+    timestamp: {
+      color: "#CCCCCC",
+      fontSize: "12px"
+    },
+    timeline: {
+      marginBottom: "12px",
+      backgroundColor: "#1E1E1E",
+      padding: "8px",
+      borderRadius: "4px",
+      maxHeight: "150px",
+      overflowY: "auto"
+    },
+    timelineTitle: {
+      color: "#888",
+      fontSize: "11px",
+      marginBottom: "6px",
+      fontWeight: "bold"
+    },
+    timelineItem: {
+      display: "flex",
+      alignItems: "center",
+      padding: "4px 0",
+      fontSize: "12px",
+      color: "#CCCCCC"
+    },
+    timelineIcon: {
+      marginRight: "6px"
+    },
+    timelineType: {
+      color: "#8E44AD",
+      fontWeight: "500",
+      marginRight: "4px"
+    },
+    timelineSeparator: {
+      color: "#666",
+      margin: "0 4px"
+    },
+    timelineTarget: {
+      flex: 1,
+      color: "#CCCCCC"
+    },
+    timelineTime: {
+      color: "#666",
+      fontSize: "10px",
+      marginLeft: "8px"
+    },
+    actions: {
+      display: "flex",
+      gap: "8px",
+      justifyContent: "flex-end"
+    },
+    button: {
+      padding: "6px 12px",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontSize: "12px",
+      fontWeight: "500",
+      transition: "opacity 0.2s"
+    },
+    buttonSubmit: {
+      backgroundColor: "#8E44AD",
+      color: "#FFFFFF"
+    },
+    buttonVeto: {
+      backgroundColor: "#E74C3C",
+      color: "#FFFFFF"
+    },
+    buttonResolve: {
+      backgroundColor: "#27AE60",
+      color: "#FFFFFF"
+    }
+  };
+
+  // src/webview/DraftStagingWidget.tsx
+  var import_react7 = __toESM(require_react());
+  var DraftStagingWidget = ({ onOpenFile }) => {
+    const [isExpanded, setIsExpanded] = (0, import_react7.useState)(false);
+    const [draftContent, setDraftContent] = (0, import_react7.useState)({
+      objectives: [],
+      constraints: [],
+      questions: []
+    });
+    const [lastUpdated, setLastUpdated] = (0, import_react7.useState)(null);
+    const [draftFilePath, setDraftFilePath] = (0, import_react7.useState)("temp/intent_draft.md");
+    (0, import_react7.useEffect)(() => {
+      const handleMessage = (event) => {
+        const message = event.data;
+        if (message.type === "workflowEvent") {
+          const workflowEvent = message.event;
+          if (workflowEvent.type === "DRAFT_UPDATED") {
+            const parsed = parseDraftContent(workflowEvent.payload?.content || "");
+            setDraftContent(parsed);
+            setLastUpdated(/* @__PURE__ */ new Date());
+            if (workflowEvent.target) {
+              setDraftFilePath(workflowEvent.target);
+            }
+          }
+        }
+      };
+      window.addEventListener("message", handleMessage);
+      return () => window.removeEventListener("message", handleMessage);
+    }, []);
+    const parseDraftContent = (content3) => {
+      const lines = content3.split("\n");
+      const result = {
+        objectives: [],
+        constraints: [],
+        questions: []
+      };
+      let currentSection = null;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("## 1. Core Objectives")) {
+          currentSection = "objectives";
+          continue;
+        } else if (trimmed.startsWith("## 2. Constraints & Rules")) {
+          currentSection = "constraints";
+          continue;
+        } else if (trimmed.startsWith("## 3. Pending Questions")) {
+          currentSection = "questions";
+          continue;
+        }
+        if (currentSection && trimmed.startsWith("- [")) {
+          const checked = trimmed.startsWith("- [x]") || trimmed.startsWith("- [X]");
+          const content4 = trimmed.replace(/^- \[[xX ]?\] /, "");
+          if (content4) {
+            result[currentSection].push({
+              type: currentSection.toUpperCase(),
+              content: content4,
+              checked
+            });
+          }
+        }
+      }
+      return result;
+    };
+    const getTotalItems = () => {
+      return draftContent.objectives.length + draftContent.constraints.length + draftContent.questions.length;
+    };
+    const handleOpenFile = () => {
+      if (onOpenFile) {
+        onOpenFile(draftFilePath);
+      } else {
+        const vscodeApi = window.__vscodeApi;
+        if (vscodeApi) {
+          vscodeApi.postMessage({
+            type: "openFile",
+            filePath: draftFilePath
+          });
+        }
+      }
+    };
+    const totalItems = getTotalItems();
+    if (totalItems === 0 && !lastUpdated) {
+      return null;
+    }
+    return /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.container }, /* @__PURE__ */ import_react7.default.createElement(
+      "div",
+      {
+        style: styles2.header,
+        onClick: () => setIsExpanded(!isExpanded)
+      },
+      /* @__PURE__ */ import_react7.default.createElement("span", { style: styles2.expandIcon }, isExpanded ? "\u25BC" : "\u25B8"),
+      /* @__PURE__ */ import_react7.default.createElement("span", { style: styles2.icon }, "\u{1F4DD}"),
+      /* @__PURE__ */ import_react7.default.createElement("span", { style: styles2.title }, "Draft: ", totalItems, " ", totalItems === 1 ? "item" : "items"),
+      !isExpanded && lastUpdated && /* @__PURE__ */ import_react7.default.createElement("span", { style: styles2.timestamp }, lastUpdated.toLocaleTimeString()),
+      /* @__PURE__ */ import_react7.default.createElement(
+        "button",
+        {
+          style: styles2.openBtn,
+          onClick: (e) => {
+            e.stopPropagation();
+            handleOpenFile();
+          },
+          title: "Open intent_draft.md"
+        },
+        /* @__PURE__ */ import_react7.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor", width: "14", height: "14" }, /* @__PURE__ */ import_react7.default.createElement("path", { d: "M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h12zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z" }), /* @__PURE__ */ import_react7.default.createElement("path", { d: "M4.646 8.146a.5.5 0 0 1 .708 0L8 10.793l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z" }))
+      )
+    ), isExpanded && /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.content }, draftContent.objectives.length > 0 && /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.section }, /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.sectionTitle }, "\u{1F3AF} Core Objectives"), /* @__PURE__ */ import_react7.default.createElement("ul", { style: styles2.list }, draftContent.objectives.map((item, index2) => /* @__PURE__ */ import_react7.default.createElement("li", { key: `obj-${index2}`, style: styles2.listItem }, /* @__PURE__ */ import_react7.default.createElement("span", { style: item.checked ? styles2.checkedItem : styles2.uncheckedItem }, item.checked ? "\u2705" : "\u2B1C", " ", item.content))))), draftContent.constraints.length > 0 && /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.section }, /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.sectionTitle }, "\u2699\uFE0F Constraints & Rules"), /* @__PURE__ */ import_react7.default.createElement("ul", { style: styles2.list }, draftContent.constraints.map((item, index2) => /* @__PURE__ */ import_react7.default.createElement("li", { key: `const-${index2}`, style: styles2.listItem }, /* @__PURE__ */ import_react7.default.createElement("span", { style: item.checked ? styles2.checkedItem : styles2.uncheckedItem }, item.checked ? "\u2705" : "\u2B1C", " ", item.content))))), draftContent.questions.length > 0 && /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.section }, /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.sectionTitle }, "\u2753 Pending Questions"), /* @__PURE__ */ import_react7.default.createElement("ul", { style: styles2.list }, draftContent.questions.map((item, index2) => /* @__PURE__ */ import_react7.default.createElement("li", { key: `quest-${index2}`, style: styles2.listItem }, /* @__PURE__ */ import_react7.default.createElement("span", { style: item.checked ? styles2.checkedItem : styles2.uncheckedItem }, item.checked ? "\u2705" : "\u2B1C", " ", item.content))))), lastUpdated && /* @__PURE__ */ import_react7.default.createElement("div", { style: styles2.footer }, /* @__PURE__ */ import_react7.default.createElement("span", { style: styles2.footerText }, "Last updated: ", lastUpdated.toLocaleString()))));
+  };
+  var styles2 = {
+    container: {
+      backgroundColor: "#252526",
+      border: "1px solid #3E3E42",
+      borderRadius: "6px",
+      marginBottom: "12px",
+      overflow: "hidden",
+      fontFamily: "var(--vscode-font-family)",
+      fontSize: "14px"
+      // 字体放大
+    },
+    header: {
+      display: "flex",
+      alignItems: "center",
+      padding: "10px 14px",
+      // 紧凑布局
+      cursor: "pointer",
+      userSelect: "none",
+      backgroundColor: "#2D2D30",
+      transition: "background-color 0.2s"
+    },
+    expandIcon: {
+      marginRight: "8px",
+      color: "#CCCCCC",
+      fontSize: "12px"
+    },
+    icon: {
+      marginRight: "8px",
+      fontSize: "16px"
+      // 图标放大
+    },
+    title: {
+      fontWeight: "bold",
+      color: "#CCCCCC",
+      flex: 1,
+      fontSize: "14px"
+      // 字体放大
+    },
+    timestamp: {
+      color: "#888",
+      fontSize: "12px",
+      marginRight: "8px"
+    },
+    openBtn: {
+      backgroundColor: "transparent",
+      border: "1px solid #3E3E42",
+      borderRadius: "4px",
+      padding: "4px 8px",
+      cursor: "pointer",
+      color: "#CCCCCC",
+      display: "flex",
+      alignItems: "center",
+      transition: "background-color 0.2s"
+    },
+    content: {
+      padding: "12px 14px",
+      borderTop: "1px solid #3E3E42",
+      maxHeight: "400px",
+      overflowY: "auto"
+    },
+    section: {
+      marginBottom: "16px"
+    },
+    sectionTitle: {
+      fontWeight: "bold",
+      color: "#A569BD",
+      // 梦幻紫色
+      fontSize: "13px",
+      marginBottom: "8px"
+    },
+    list: {
+      listStyle: "none",
+      margin: 0,
+      padding: 0
+    },
+    listItem: {
+      marginBottom: "6px",
+      paddingLeft: "4px"
+    },
+    uncheckedItem: {
+      color: "#CCCCCC",
+      fontSize: "13px"
+    },
+    checkedItem: {
+      color: "#888",
+      fontSize: "13px",
+      textDecoration: "line-through"
+    },
+    footer: {
+      borderTop: "1px solid #3E3E42",
+      paddingTop: "8px",
+      marginTop: "12px"
+    },
+    footerText: {
+      color: "#666",
+      fontSize: "11px"
+    }
+  };
+
+  // src/webview/IntentProposalCard.tsx
+  var import_react8 = __toESM(require_react());
+  var IntentProposalCard = ({
+    summary,
+    targetFile,
+    confidence = 0,
+    onGenerate,
+    onCancel
+  }) => {
+    const [isProcessing, setIsProcessing] = (0, import_react8.useState)(false);
+    const [isVisible, setIsVisible] = (0, import_react8.useState)(true);
+    const getFileName = (filePath) => {
+      return filePath.split(/[/\\]/).pop() || filePath;
+    };
+    const handleGenerate = async () => {
+      setIsProcessing(true);
+      try {
+        await onGenerate(targetFile);
+        setTimeout(() => {
+          setIsVisible(false);
+        }, 500);
+      } catch (error) {
+        console.error("[IntentProposalCard] Generate failed:", error);
+        alert(`Failed to generate Spec: ${error.message || "Unknown error"}`);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    const handleCancel = () => {
+      if (onCancel) {
+        onCancel();
+      }
+      setIsVisible(false);
+    };
+    if (!isVisible) {
+      return null;
+    }
+    return /* @__PURE__ */ import_react8.default.createElement("div", { style: {
+      ...styles3.container,
+      animation: isVisible ? "fadeIn 0.3s ease-in-out" : "fadeOut 0.3s ease-in-out"
+    } }, /* @__PURE__ */ import_react8.default.createElement("div", { style: styles3.header }, /* @__PURE__ */ import_react8.default.createElement("span", { style: styles3.icon }, "\u{1F680}"), /* @__PURE__ */ import_react8.default.createElement("span", { style: styles3.title }, "Ready to Crystallize?"), confidence > 0 && /* @__PURE__ */ import_react8.default.createElement("span", { style: styles3.confidence }, "Confidence: ", Math.round(confidence * 100), "%")), /* @__PURE__ */ import_react8.default.createElement("div", { style: styles3.body }, summary && /* @__PURE__ */ import_react8.default.createElement("div", { style: styles3.summary }, summary), /* @__PURE__ */ import_react8.default.createElement("div", { style: styles3.targetRow }, /* @__PURE__ */ import_react8.default.createElement("span", { style: styles3.targetLabel }, "Target:"), /* @__PURE__ */ import_react8.default.createElement("code", { style: styles3.targetFile }, getFileName(targetFile)))), /* @__PURE__ */ import_react8.default.createElement("div", { style: styles3.footer }, /* @__PURE__ */ import_react8.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles3.button,
+          ...styles3.cancelBtn
+        },
+        onClick: handleCancel,
+        disabled: isProcessing
+      },
+      "Cancel"
+    ), /* @__PURE__ */ import_react8.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles3.button,
+          ...styles3.generateBtn,
+          opacity: isProcessing ? 0.6 : 1,
+          cursor: isProcessing ? "not-allowed" : "pointer"
+        },
+        onClick: handleGenerate,
+        disabled: isProcessing
+      },
+      isProcessing ? /* @__PURE__ */ import_react8.default.createElement(import_react8.default.Fragment, null, /* @__PURE__ */ import_react8.default.createElement("span", { style: styles3.spinner }, "\u23F3"), " Generating...") : /* @__PURE__ */ import_react8.default.createElement(import_react8.default.Fragment, null, "\u2705 Generate Spec")
+    )));
+  };
+  var styles3 = {
+    container: {
+      backgroundColor: "#252526",
+      border: "2px solid #A569BD",
+      // 梦幻紫色边框
+      borderRadius: "8px",
+      padding: "16px",
+      marginTop: "12px",
+      marginBottom: "12px",
+      fontFamily: "var(--vscode-font-family)",
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(165, 105, 189, 0.2)"
+      // 紫色阴影
+    },
+    header: {
+      display: "flex",
+      alignItems: "center",
+      marginBottom: "12px"
+    },
+    icon: {
+      fontSize: "24px",
+      marginRight: "10px"
+    },
+    title: {
+      fontWeight: "bold",
+      color: "#CCCCCC",
+      fontSize: "16px",
+      flex: 1
+    },
+    confidence: {
+      color: "#888",
+      fontSize: "12px",
+      fontStyle: "italic"
+    },
+    body: {
+      marginBottom: "16px"
+    },
+    summary: {
+      color: "#CCCCCC",
+      fontSize: "13px",
+      lineHeight: "1.5",
+      marginBottom: "12px",
+      paddingLeft: "8px",
+      borderLeft: "3px solid #A569BD"
+    },
+    targetRow: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px"
+    },
+    targetLabel: {
+      color: "#888",
+      fontSize: "13px",
+      fontWeight: "500"
+    },
+    targetFile: {
+      backgroundColor: "#1E1E1E",
+      color: "#A569BD",
+      padding: "4px 8px",
+      borderRadius: "4px",
+      fontSize: "13px",
+      fontFamily: "monospace"
+    },
+    footer: {
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: "10px"
+    },
+    button: {
+      padding: "8px 16px",
+      border: "none",
+      borderRadius: "5px",
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: "500",
+      transition: "opacity 0.2s, background-color 0.2s"
+    },
+    cancelBtn: {
+      backgroundColor: "#3E3E42",
+      color: "#CCCCCC"
+    },
+    generateBtn: {
+      backgroundColor: "#A569BD",
+      // 梦幻紫色
+      color: "#FFFFFF"
+    },
+    spinner: {
+      display: "inline-block",
+      animation: "spin 1s linear infinite"
+    }
+  };
+
+  // src/webview/TribunalCard.tsx
+  var import_react9 = __toESM(require_react());
+  var TribunalCard = ({
+    vetoReason,
+    vetoRequirement,
+    fixSummary,
+    targetFile,
+    workflowState,
+    onViewDiff,
+    onApproveFix
+  }) => {
+    const [isProcessing, setIsProcessing] = (0, import_react9.useState)(false);
+    const [isVisible, setIsVisible] = (0, import_react9.useState)(true);
+    const getFileName = (filePath) => {
+      return filePath.split(/[/\\]/).pop() || filePath;
+    };
+    const handleViewDiff = () => {
+      if (onViewDiff) {
+        onViewDiff(targetFile);
+      } else {
+        const vscodeApi = window.__vscodeApi;
+        if (vscodeApi) {
+          vscodeApi.postMessage({
+            type: "viewDiff",
+            filePath: targetFile
+          });
+        }
+      }
+    };
+    const handleApproveFix = async () => {
+      setIsProcessing(true);
+      try {
+        await onApproveFix(targetFile);
+        setTimeout(() => {
+          setIsVisible(false);
+        }, 500);
+      } catch (error) {
+        console.error("[TribunalCard] Approve failed:", error);
+        alert(`Failed to approve fix: ${error.message || "Unknown error"}`);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    if (!isVisible) {
+      return null;
+    }
+    return /* @__PURE__ */ import_react9.default.createElement("div", { style: {
+      ...styles4.container,
+      animation: isVisible ? "fadeIn 0.3s ease-in-out" : "fadeOut 0.3s ease-in-out"
+    } }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.banner }, /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.bannerIcon }, "\u26A0\uFE0F"), /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.bannerText }, "Architecture Conflict Detected"), /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.bannerFile }, getFileName(targetFile))), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.splitView }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.leftPanel }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.panelHeader }, /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.panelIcon }, "\u{1F6D1}"), /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.panelTitle }, "Archi's Challenge")), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.panelContent }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoReason }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoLabel }, "Reason:"), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoText }, vetoReason)), vetoRequirement && /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoRequirement }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoLabel }, "Requirement:"), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.vetoText }, vetoRequirement)))), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.rightPanel }, /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.panelHeader }, /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.panelIcon }, "\u{1F527}"), /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.panelTitle }, "Poe's Fix")), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.panelContent }, workflowState === "FIXING" && fixSummary ? /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.fixSummary }, fixSummary) : /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.fixPending }, /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.pendingIcon }, "\u23F3"), /* @__PURE__ */ import_react9.default.createElement("span", null, "Waiting for Poe to propose a fix..."))))), /* @__PURE__ */ import_react9.default.createElement("div", { style: styles4.footer }, /* @__PURE__ */ import_react9.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles4.button,
+          ...styles4.viewDiffBtn
+        },
+        onClick: handleViewDiff,
+        title: "View Diff"
+      },
+      "\u{1F50D} View Diff"
+    ), /* @__PURE__ */ import_react9.default.createElement(
+      "button",
+      {
+        style: {
+          ...styles4.button,
+          ...styles4.approveBtn,
+          opacity: workflowState === "REJECTED" || isProcessing ? 0.6 : 1,
+          cursor: workflowState === "REJECTED" || isProcessing ? "not-allowed" : "pointer"
+        },
+        onClick: handleApproveFix,
+        disabled: workflowState === "REJECTED" || isProcessing,
+        title: workflowState === "REJECTED" ? "Wait for Poe to fix first" : "Approve Fix"
+      },
+      isProcessing ? /* @__PURE__ */ import_react9.default.createElement(import_react9.default.Fragment, null, /* @__PURE__ */ import_react9.default.createElement("span", { style: styles4.spinner }, "\u23F3"), " Processing...") : /* @__PURE__ */ import_react9.default.createElement(import_react9.default.Fragment, null, "\u2705 Approve Fix")
+    )));
+  };
+  var styles4 = {
+    container: {
+      backgroundColor: "#252526",
+      border: "2px solid #E74C3C",
+      // 红色边框
+      borderRadius: "8px",
+      padding: "16px",
+      marginTop: "12px",
+      marginBottom: "12px",
+      fontFamily: "var(--vscode-font-family)",
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(231, 76, 60, 0.2)"
+      // 红色阴影
+    },
+    banner: {
+      display: "flex",
+      alignItems: "center",
+      backgroundColor: "#3E2723",
+      padding: "10px 12px",
+      borderRadius: "6px",
+      marginBottom: "16px",
+      border: "1px solid #E74C3C"
+    },
+    bannerIcon: {
+      fontSize: "20px",
+      marginRight: "10px"
+    },
+    bannerText: {
+      fontWeight: "bold",
+      color: "#E74C3C",
+      fontSize: "15px",
+      flex: 1
+    },
+    bannerFile: {
+      color: "#888",
+      fontSize: "12px",
+      fontStyle: "italic"
+    },
+    splitView: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "12px",
+      marginBottom: "16px"
+    },
+    leftPanel: {
+      backgroundColor: "#1E1E1E",
+      border: "1px solid #E74C3C",
+      borderRadius: "6px",
+      overflow: "hidden"
+    },
+    rightPanel: {
+      backgroundColor: "#1E1E1E",
+      border: "1px solid #27AE60",
+      borderRadius: "6px",
+      overflow: "hidden"
+    },
+    panelHeader: {
+      display: "flex",
+      alignItems: "center",
+      padding: "8px 12px",
+      backgroundColor: "#2D2D30",
+      borderBottom: "1px solid #3E3E42"
+    },
+    panelIcon: {
+      fontSize: "16px",
+      marginRight: "8px"
+    },
+    panelTitle: {
+      fontWeight: "bold",
+      color: "#CCCCCC",
+      fontSize: "13px"
+    },
+    panelContent: {
+      padding: "12px"
+    },
+    vetoReason: {
+      marginBottom: "12px"
+    },
+    vetoRequirement: {
+      marginBottom: "0"
+    },
+    vetoLabel: {
+      color: "#888",
+      fontSize: "12px",
+      fontWeight: "500",
+      marginBottom: "4px"
+    },
+    vetoText: {
+      color: "#CCCCCC",
+      fontSize: "13px",
+      lineHeight: "1.5",
+      paddingLeft: "8px",
+      borderLeft: "3px solid #E74C3C"
+    },
+    fixSummary: {
+      color: "#CCCCCC",
+      fontSize: "13px",
+      lineHeight: "1.5",
+      paddingLeft: "8px",
+      borderLeft: "3px solid #27AE60"
+    },
+    fixPending: {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      color: "#888",
+      fontSize: "13px",
+      fontStyle: "italic"
+    },
+    pendingIcon: {
+      fontSize: "16px"
+    },
+    footer: {
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: "10px"
+    },
+    button: {
+      padding: "8px 16px",
+      border: "none",
+      borderRadius: "5px",
+      cursor: "pointer",
+      fontSize: "13px",
+      fontWeight: "500",
+      transition: "opacity 0.2s, background-color 0.2s"
+    },
+    viewDiffBtn: {
+      backgroundColor: "#3E3E42",
+      color: "#CCCCCC"
+    },
+    approveBtn: {
+      backgroundColor: "#27AE60",
+      // 绿色
+      color: "#FFFFFF"
+    },
+    spinner: {
+      display: "inline-block",
+      animation: "spin 1s linear infinite"
+    }
+  };
+
   // src/webview/App.tsx
   var App = () => {
-    const [messages, setMessages] = (0, import_react6.useState)([]);
-    const [agent2, setAgent] = (0, import_react6.useState)("poe");
-    const [model, setModel] = (0, import_react6.useState)("qwen");
-    const [hasContent, setHasContent] = (0, import_react6.useState)(false);
-    const [isWaiting, setIsWaiting] = (0, import_react6.useState)(false);
-    const [waitingTime, setWaitingTime] = (0, import_react6.useState)(0);
-    const [isStopped, setIsStopped] = (0, import_react6.useState)(false);
-    const vscodeRef = import_react6.default.useRef(null);
-    const editorRef = import_react6.default.useRef(null);
-    const slashHandlerRef = (0, import_react6.useRef)(new SlashCommandHandler());
-    const contextQueryResolversRef = import_react6.default.useRef(/* @__PURE__ */ new Map());
-    const [externalContextItems, setExternalContextItems] = (0, import_react6.useState)([]);
-    (0, import_react6.useEffect)(() => {
+    const [messages, setMessages] = (0, import_react10.useState)([]);
+    const [agent2, setAgent] = (0, import_react10.useState)("poe");
+    const [model, setModel] = (0, import_react10.useState)("qwen");
+    const [hasContent, setHasContent] = (0, import_react10.useState)(false);
+    const [isWaiting, setIsWaiting] = (0, import_react10.useState)(false);
+    const [waitingTime, setWaitingTime] = (0, import_react10.useState)(0);
+    const [isStopped, setIsStopped] = (0, import_react10.useState)(false);
+    const vscodeRef = import_react10.default.useRef(null);
+    const editorRef = import_react10.default.useRef(null);
+    const slashHandlerRef = (0, import_react10.useRef)(new SlashCommandHandler());
+    const [proposalCardData, setProposalCardData] = (0, import_react10.useState)(null);
+    const [tribunalCardData, setTribunalCardData] = (0, import_react10.useState)(null);
+    const contextQueryResolversRef = import_react10.default.useRef(/* @__PURE__ */ new Map());
+    const [externalContextItems, setExternalContextItems] = (0, import_react10.useState)([]);
+    (0, import_react10.useEffect)(() => {
       if (!isWaiting) {
         setWaitingTime(0);
         return;
@@ -75753,7 +76640,7 @@ img.ProseMirror-separator {
       }, 1e3);
       return () => clearInterval(timer);
     }, [isWaiting]);
-    (0, import_react6.useEffect)(() => {
+    (0, import_react10.useEffect)(() => {
       vscodeRef.current = window.__vscodeApi || null;
       if (!vscodeRef.current) {
         console.error("[App] VS Code API not found on window.__vscodeApi");
@@ -75804,6 +76691,27 @@ ${helpMessage}`,
                 timestamp: message.message.timestamp || Date.now()
               };
               setMessages((prev) => [...prev, assistantMsg]);
+            }
+            break;
+          case "workflowEvent":
+            const workflowEvent = message.event;
+            if (workflowEvent.type === "PROPOSAL_READY") {
+              setProposalCardData({
+                summary: workflowEvent.payload?.summary || "Draft is ready to be crystallized into a formal Spec.",
+                targetFile: workflowEvent.target,
+                confidence: workflowEvent.payload?.confidence || 0
+              });
+            } else if (workflowEvent.type === "VETO_APPLIED" || workflowEvent.type === "FIX_SUBMITTED") {
+              setTribunalCardData({
+                vetoReason: workflowEvent.payload?.reason || "Architecture constraint violated",
+                vetoRequirement: workflowEvent.payload?.suggestion || workflowEvent.payload?.requirement,
+                fixSummary: workflowEvent.payload?.fixSummary,
+                targetFile: workflowEvent.target,
+                workflowState: workflowEvent.workflowState
+              });
+            } else if (workflowEvent.type === "WORKFLOW_APPROVED") {
+              setProposalCardData(null);
+              setTribunalCardData(null);
             }
             break;
           case "contextProviderResults":
@@ -75875,7 +76783,7 @@ ${helpMessage}`,
       window.addEventListener("message", messageHandler);
       return () => window.removeEventListener("message", messageHandler);
     }, [isStopped]);
-    const handleSend = (0, import_react6.useCallback)(async (content3, contextItems) => {
+    const handleSend = (0, import_react10.useCallback)(async (content3, contextItems) => {
       const isCommand = await slashHandlerRef.current.execute(content3);
       if (isCommand) {
         setHasContent(false);
@@ -75911,7 +76819,7 @@ ${helpMessage}`,
       }
       setHasContent(false);
     }, [agent2, model, externalContextItems]);
-    const handleContextProvider = (0, import_react6.useCallback)(async (type, query) => {
+    const handleContextProvider = (0, import_react10.useCallback)(async (type, query) => {
       if (!vscodeRef.current) {
         console.error("[App] VS Code API not available");
         return [];
@@ -75955,7 +76863,7 @@ ${helpMessage}`,
     const copyMessage = (content3) => {
       navigator.clipboard.writeText(content3);
     };
-    const handleStop = (0, import_react6.useCallback)(() => {
+    const handleStop = (0, import_react10.useCallback)(() => {
       setIsWaiting(false);
       setIsStopped(true);
       if (vscodeRef.current) {
@@ -75964,12 +76872,97 @@ ${helpMessage}`,
         });
       }
     }, []);
-    return /* @__PURE__ */ import_react6.default.createElement("div", { className: "app-container" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "header" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "header-left" }, /* @__PURE__ */ import_react6.default.createElement("svg", { className: "header-icon", viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M8.5 1a.5.5 0 0 0-1 0v1h-1a.5.5 0 0 0 0 1h1v.5A2.5 2.5 0 0 0 5 6v1H3.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5H11V6a2.5 2.5 0 0 0-2.5-2.5V3h1a.5.5 0 0 0 0-1h-1V1zM6 6a1.5 1.5 0 0 1 3 0v1H6V6z" }), /* @__PURE__ */ import_react6.default.createElement("circle", { cx: "6", cy: "9", r: ".5" }), /* @__PURE__ */ import_react6.default.createElement("circle", { cx: "10", cy: "9", r: ".5" })), /* @__PURE__ */ import_react6.default.createElement("span", { className: "header-title" }, "SEMIPILOT: CHAT")), /* @__PURE__ */ import_react6.default.createElement("div", { className: "header-actions" }, /* @__PURE__ */ import_react6.default.createElement("button", { className: "header-btn", onClick: handleNewChat, title: "New chat" }, /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M7.5 1.5v5.793L9.146 5.646a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 7.293V1.5a.5.5 0 0 1 1 0z" }), /* @__PURE__ */ import_react6.default.createElement("path", { d: "M8 0a.5.5 0 0 1 .5.5v5.793l1.646-1.647a.5.5 0 0 1 .708.708l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5a.5.5 0 1 1 .708-.708L7.5 6.293V.5A.5.5 0 0 1 8 0zm-7 8a.5.5 0 0 1 .5.5V13a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8.5a.5.5 0 0 1 1 0V13a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V8.5A.5.5 0 0 1 1 8z" }))), /* @__PURE__ */ import_react6.default.createElement("button", { className: "header-btn", onClick: handleSettings, title: "Settings" }, /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z" }), /* @__PURE__ */ import_react6.default.createElement("path", { d: "M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z" }))), /* @__PURE__ */ import_react6.default.createElement("button", { className: "header-btn", onClick: handleMore, title: "More options" }, /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("circle", { cx: "8", cy: "3", r: "1.5" }), /* @__PURE__ */ import_react6.default.createElement("circle", { cx: "8", cy: "8", r: "1.5" }), /* @__PURE__ */ import_react6.default.createElement("circle", { cx: "8", cy: "13", r: "1.5" }))))), /* @__PURE__ */ import_react6.default.createElement("div", { className: "chat-messages" }, messages.length === 0 ? /* @__PURE__ */ import_react6.default.createElement("div", { className: "empty-state" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "empty-state-icon" }, "\u{1F4AC}\u2728"), /* @__PURE__ */ import_react6.default.createElement("div", { className: "empty-state-title" }, "Build with Semipilot"), /* @__PURE__ */ import_react6.default.createElement("div", { className: "empty-state-subtitle" }, "Start a conversation with your AI coding assistant")) : /* @__PURE__ */ import_react6.default.createElement(import_react6.default.Fragment, null, messages.map((msg) => /* @__PURE__ */ import_react6.default.createElement("div", { key: msg.id, className: `message ${msg.isUser ? "user-message" : "assistant-message"}` }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "message-content" }, msg.isUser ? (
+    const handleWorkflowAction = (0, import_react10.useCallback)((action, target, params) => {
+      console.log("[App] Workflow action:", action, target, params);
+      if (vscodeRef.current) {
+        vscodeRef.current.postMessage({
+          type: "workflowAction",
+          action,
+          target,
+          params
+        });
+      }
+      const actionNames = {
+        submit: "Submit for Review",
+        veto: "Veto",
+        resolve: "Resolve"
+      };
+      const fileName = target.split(/[\/\\]/).pop() || target;
+      let operationDetail = "";
+      if (action === "veto" && params?.reason) {
+        operationDetail = `
+**\u539F\u56E0**: ${params.reason}`;
+        if (params.suggestion) {
+          operationDetail += `
+**\u5EFA\u8BAE**: ${params.suggestion}`;
+        }
+      } else if (action === "resolve") {
+        operationDetail = "\n\u2705 \u7528\u6237\u786E\u8BA4\u5DF2\u4FEE\u590D";
+      }
+      const operationMsg = {
+        id: Date.now().toString(),
+        content: `\u{1F6E0}\uFE0F **Workflow \u64CD\u4F5C**
+
+\u64CD\u4F5C: **${actionNames[action]}**
+\u76EE\u6807: \`${fileName}\`${operationDetail}
+
+\u23F3 \u6B63\u5728\u5904\u7406...`,
+        isUser: false,
+        timestamp: Date.now()
+      };
+      setMessages((prev) => [...prev, operationMsg]);
+    }, []);
+    const handleGenerateSpec = (0, import_react10.useCallback)(async (targetFile) => {
+      console.log("[App] Generate Spec:", targetFile);
+      if (vscodeRef.current) {
+        vscodeRef.current.postMessage({
+          type: "commitDraft",
+          targetFile
+        });
+      }
+      setProposalCardData(null);
+      const fileName = targetFile.split(/[\/\\]/).pop() || targetFile;
+      const operationMsg = {
+        id: Date.now().toString(),
+        content: `\u{1F680} **Generate Spec**
+
+\u76EE\u6807: \`${fileName}\`
+
+\u23F3 \u6B63\u5728\u751F\u6210 Spec...`,
+        isUser: false,
+        timestamp: Date.now()
+      };
+      setMessages((prev) => [...prev, operationMsg]);
+    }, []);
+    const handleApproveFix = (0, import_react10.useCallback)(async (targetFile) => {
+      console.log("[App] Approve Fix:", targetFile);
+      handleWorkflowAction("resolve", targetFile, { userApproved: true });
+      setTribunalCardData(null);
+    }, [handleWorkflowAction]);
+    const handleViewDiff = (0, import_react10.useCallback)((targetFile) => {
+      console.log("[App] View Diff:", targetFile);
+      if (vscodeRef.current) {
+        vscodeRef.current.postMessage({
+          type: "viewDiff",
+          filePath: targetFile
+        });
+      }
+    }, []);
+    const handleOpenFile = (0, import_react10.useCallback)((filePath) => {
+      console.log("[App] Open File:", filePath);
+      if (vscodeRef.current) {
+        vscodeRef.current.postMessage({
+          type: "openFile",
+          filePath
+        });
+      }
+    }, []);
+    return /* @__PURE__ */ import_react10.default.createElement("div", { className: "app-container" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "header" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "header-left" }, /* @__PURE__ */ import_react10.default.createElement("svg", { className: "header-icon", viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M8.5 1a.5.5 0 0 0-1 0v1h-1a.5.5 0 0 0 0 1h1v.5A2.5 2.5 0 0 0 5 6v1H3.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5H11V6a2.5 2.5 0 0 0-2.5-2.5V3h1a.5.5 0 0 0 0-1h-1V1zM6 6a1.5 1.5 0 0 1 3 0v1H6V6z" }), /* @__PURE__ */ import_react10.default.createElement("circle", { cx: "6", cy: "9", r: ".5" }), /* @__PURE__ */ import_react10.default.createElement("circle", { cx: "10", cy: "9", r: ".5" })), /* @__PURE__ */ import_react10.default.createElement("span", { className: "header-title" }, "SEMIPILOT: CHAT")), /* @__PURE__ */ import_react10.default.createElement("div", { className: "header-actions" }, /* @__PURE__ */ import_react10.default.createElement("button", { className: "header-btn", onClick: handleNewChat, title: "New chat" }, /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M7.5 1.5v5.793L9.146 5.646a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 7.293V1.5a.5.5 0 0 1 1 0z" }), /* @__PURE__ */ import_react10.default.createElement("path", { d: "M8 0a.5.5 0 0 1 .5.5v5.793l1.646-1.647a.5.5 0 0 1 .708.708l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5a.5.5 0 1 1 .708-.708L7.5 6.293V.5A.5.5 0 0 1 8 0zm-7 8a.5.5 0 0 1 .5.5V13a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8.5a.5.5 0 0 1 1 0V13a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V8.5A.5.5 0 0 1 1 8z" }))), /* @__PURE__ */ import_react10.default.createElement("button", { className: "header-btn", onClick: handleSettings, title: "Settings" }, /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z" }), /* @__PURE__ */ import_react10.default.createElement("path", { d: "M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z" }))), /* @__PURE__ */ import_react10.default.createElement("button", { className: "header-btn", onClick: handleMore, title: "More options" }, /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("circle", { cx: "8", cy: "3", r: "1.5" }), /* @__PURE__ */ import_react10.default.createElement("circle", { cx: "8", cy: "8", r: "1.5" }), /* @__PURE__ */ import_react10.default.createElement("circle", { cx: "8", cy: "13", r: "1.5" }))))), /* @__PURE__ */ import_react10.default.createElement("div", { className: "chat-messages" }, messages.length === 0 ? /* @__PURE__ */ import_react10.default.createElement("div", { className: "empty-state" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "empty-state-icon" }, "\u{1F4AC}\u2728"), /* @__PURE__ */ import_react10.default.createElement("div", { className: "empty-state-title" }, "Build with Semipilot"), /* @__PURE__ */ import_react10.default.createElement("div", { className: "empty-state-subtitle" }, "Start a conversation with your AI coding assistant")) : /* @__PURE__ */ import_react10.default.createElement(import_react10.default.Fragment, null, messages.map((msg) => /* @__PURE__ */ import_react10.default.createElement("div", { key: msg.id, className: `message ${msg.isUser ? "user-message" : "assistant-message"}` }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "message-content" }, msg.isUser ? (
       // 用户消息：直接显示文本
-      /* @__PURE__ */ import_react6.default.createElement(import_react6.default.Fragment, null, /* @__PURE__ */ import_react6.default.createElement("div", { className: "user-text" }, msg.content), msg.contextItems && msg.contextItems.length > 0 && /* @__PURE__ */ import_react6.default.createElement("div", { className: "context-files" }, msg.contextItems.map((item, index2) => /* @__PURE__ */ import_react6.default.createElement("span", { key: index2, className: "context-file-badge" }, item.type === "spec" ? "\u{1F4C4}" : "\u{1F4C1}", " ", item.label))))
+      /* @__PURE__ */ import_react10.default.createElement(import_react10.default.Fragment, null, /* @__PURE__ */ import_react10.default.createElement("div", { className: "user-text" }, msg.content), msg.contextItems && msg.contextItems.length > 0 && /* @__PURE__ */ import_react10.default.createElement("div", { className: "context-files" }, msg.contextItems.map((item, index2) => /* @__PURE__ */ import_react10.default.createElement("span", { key: index2, className: "context-file-badge" }, item.type === "spec" ? "\u{1F4C4}" : "\u{1F4C1}", " ", item.label))))
     ) : (
       // AI 回复：Markdown 渲染
-      /* @__PURE__ */ import_react6.default.createElement(
+      /* @__PURE__ */ import_react10.default.createElement(
         Markdown,
         {
           remarkPlugins: [remarkGfm],
@@ -75978,13 +76971,33 @@ ${helpMessage}`,
             code(props) {
               const { node: node2, inline, className, children, ...rest } = props;
               const match = /language-(\w+)/.exec(className || "");
-              return !inline && match ? /* @__PURE__ */ import_react6.default.createElement("pre", { className: `language-${match[1]}` }, /* @__PURE__ */ import_react6.default.createElement("code", { className, ...rest }, children)) : /* @__PURE__ */ import_react6.default.createElement("code", { className, ...rest }, children);
+              return !inline && match ? /* @__PURE__ */ import_react10.default.createElement("pre", { className: `language-${match[1]}` }, /* @__PURE__ */ import_react10.default.createElement("code", { className, ...rest }, children)) : /* @__PURE__ */ import_react10.default.createElement("code", { className, ...rest }, children);
             }
           }
         },
         msg.content
       )
-    )), /* @__PURE__ */ import_react6.default.createElement("div", { className: "message-actions" }, /* @__PURE__ */ import_react6.default.createElement("button", { className: "message-copy-btn", onClick: () => copyMessage(msg.content), title: "Copy message" }, "\u{1F4CB}")))), isWaiting && /* @__PURE__ */ import_react6.default.createElement("div", { className: "message loading-message" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "loading-content" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "loading-dots" }, /* @__PURE__ */ import_react6.default.createElement("span", { className: "dot" }), /* @__PURE__ */ import_react6.default.createElement("span", { className: "dot" }), /* @__PURE__ */ import_react6.default.createElement("span", { className: "dot" })), /* @__PURE__ */ import_react6.default.createElement("span", { className: "loading-timer" }, waitingTime, "s"))))), /* @__PURE__ */ import_react6.default.createElement("div", { className: "input-container" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "input-wrapper" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "input-header" }, /* @__PURE__ */ import_react6.default.createElement("button", { className: "add-context-btn", title: "Add Context" }, /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h12zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z" }), /* @__PURE__ */ import_react6.default.createElement("path", { d: "M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.235.235 0 0 1 .02-.022z" })), /* @__PURE__ */ import_react6.default.createElement("span", null, "Add Context..."))), /* @__PURE__ */ import_react6.default.createElement("div", { className: "input-main" }, /* @__PURE__ */ import_react6.default.createElement(
+    )), /* @__PURE__ */ import_react10.default.createElement("div", { className: "message-actions" }, /* @__PURE__ */ import_react10.default.createElement("button", { className: "message-copy-btn", onClick: () => copyMessage(msg.content), title: "Copy message" }, "\u{1F4CB}")))), isWaiting && /* @__PURE__ */ import_react10.default.createElement("div", { className: "message loading-message" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "loading-content" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "loading-dots" }, /* @__PURE__ */ import_react10.default.createElement("span", { className: "dot" }), /* @__PURE__ */ import_react10.default.createElement("span", { className: "dot" }), /* @__PURE__ */ import_react10.default.createElement("span", { className: "dot" })), /* @__PURE__ */ import_react10.default.createElement("span", { className: "loading-timer" }, waitingTime, "s"))), proposalCardData && /* @__PURE__ */ import_react10.default.createElement(
+      IntentProposalCard,
+      {
+        summary: proposalCardData.summary,
+        targetFile: proposalCardData.targetFile,
+        confidence: proposalCardData.confidence,
+        onGenerate: handleGenerateSpec,
+        onCancel: () => setProposalCardData(null)
+      }
+    ), tribunalCardData && /* @__PURE__ */ import_react10.default.createElement(
+      TribunalCard,
+      {
+        vetoReason: tribunalCardData.vetoReason,
+        vetoRequirement: tribunalCardData.vetoRequirement,
+        fixSummary: tribunalCardData.fixSummary,
+        targetFile: tribunalCardData.targetFile,
+        workflowState: tribunalCardData.workflowState,
+        onViewDiff: handleViewDiff,
+        onApproveFix: handleApproveFix
+      }
+    ))), /* @__PURE__ */ import_react10.default.createElement(DraftStagingWidget, { onOpenFile: handleOpenFile }), /* @__PURE__ */ import_react10.default.createElement(WorkflowCard, { onAction: handleWorkflowAction }), /* @__PURE__ */ import_react10.default.createElement("div", { className: "input-container" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "input-wrapper" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "input-header" }, /* @__PURE__ */ import_react10.default.createElement("button", { className: "add-context-btn", title: "Add Context" }, /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M14 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h12zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z" }), /* @__PURE__ */ import_react10.default.createElement("path", { d: "M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.235.235 0 0 1 .02-.022z" })), /* @__PURE__ */ import_react10.default.createElement("span", null, "Add Context..."))), /* @__PURE__ */ import_react10.default.createElement("div", { className: "input-main" }, /* @__PURE__ */ import_react10.default.createElement(
       TipTapEditor,
       {
         ref: editorRef,
@@ -75994,15 +77007,15 @@ ${helpMessage}`,
         onContentChange: (hasContent2) => setHasContent(hasContent2),
         placeholder: "Ask Semipilot or type / for commands..."
       }
-    )), /* @__PURE__ */ import_react6.default.createElement("div", { className: "input-toolbar" }, /* @__PURE__ */ import_react6.default.createElement("div", { className: "toolbar-left" }, /* @__PURE__ */ import_react6.default.createElement("select", { className: "toolbar-select", value: agent2, onChange: (e) => setAgent(e.target.value), title: "Select agent" }, /* @__PURE__ */ import_react6.default.createElement("option", { value: "poe" }, "Agent"), /* @__PURE__ */ import_react6.default.createElement("option", { value: "archi" }, "Agent: Archi"), /* @__PURE__ */ import_react6.default.createElement("option", { value: "cody" }, "Agent: Cody")), /* @__PURE__ */ import_react6.default.createElement("select", { className: "toolbar-select", value: model, onChange: (e) => setModel(e.target.value), title: "Select model" }, /* @__PURE__ */ import_react6.default.createElement("option", { value: "qwen" }, "Raptor mini (Preview)"), /* @__PURE__ */ import_react6.default.createElement("option", { value: "claude" }, "Claude"))), /* @__PURE__ */ import_react6.default.createElement("div", { className: "toolbar-right" }, /* @__PURE__ */ import_react6.default.createElement("button", { className: "toolbar-icon-btn", title: "Attach file" }, /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M11.5 1a3.5 3.5 0 0 0-3.5 3.5V11a2 2 0 1 0 4 0V4.5a.5.5 0 0 1 1 0V11a3 3 0 1 1-6 0V4.5a4.5 4.5 0 1 1 9 0V11a5.5 5.5 0 1 1-11 0V4.5a.5.5 0 0 1 1 0V11a4.5 4.5 0 1 0 9 0V4.5A3.5 3.5 0 0 0 11.5 1z" }))), isWaiting ? /* @__PURE__ */ import_react6.default.createElement(
+    )), /* @__PURE__ */ import_react10.default.createElement("div", { className: "input-toolbar" }, /* @__PURE__ */ import_react10.default.createElement("div", { className: "toolbar-left" }, /* @__PURE__ */ import_react10.default.createElement("select", { className: "toolbar-select", value: agent2, onChange: (e) => setAgent(e.target.value), title: "Select agent" }, /* @__PURE__ */ import_react10.default.createElement("option", { value: "poe" }, "Agent"), /* @__PURE__ */ import_react10.default.createElement("option", { value: "archi" }, "Agent: Archi"), /* @__PURE__ */ import_react10.default.createElement("option", { value: "cody" }, "Agent: Cody")), /* @__PURE__ */ import_react10.default.createElement("select", { className: "toolbar-select", value: model, onChange: (e) => setModel(e.target.value), title: "Select model" }, /* @__PURE__ */ import_react10.default.createElement("option", { value: "qwen" }, "Raptor mini (Preview)"), /* @__PURE__ */ import_react10.default.createElement("option", { value: "claude" }, "Claude"))), /* @__PURE__ */ import_react10.default.createElement("div", { className: "toolbar-right" }, /* @__PURE__ */ import_react10.default.createElement("button", { className: "toolbar-icon-btn", title: "Attach file" }, /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M11.5 1a3.5 3.5 0 0 0-3.5 3.5V11a2 2 0 1 0 4 0V4.5a.5.5 0 0 1 1 0V11a3 3 0 1 1-6 0V4.5a4.5 4.5 0 1 1 9 0V11a5.5 5.5 0 1 1-11 0V4.5a.5.5 0 0 1 1 0V11a4.5 4.5 0 1 0 9 0V4.5A3.5 3.5 0 0 0 11.5 1z" }))), isWaiting ? /* @__PURE__ */ import_react10.default.createElement(
       "button",
       {
         className: "toolbar-stop-btn",
         onClick: handleStop,
         title: "Stop generation"
       },
-      /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("rect", { x: "4", y: "4", width: "8", height: "8", rx: "1" }))
-    ) : /* @__PURE__ */ import_react6.default.createElement(
+      /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("rect", { x: "4", y: "4", width: "8", height: "8", rx: "1" }))
+    ) : /* @__PURE__ */ import_react10.default.createElement(
       "button",
       {
         className: "toolbar-send-btn",
@@ -76010,13 +77023,13 @@ ${helpMessage}`,
         disabled: !hasContent,
         title: hasContent ? "Send message (Enter)" : "Type a message first"
       },
-      /* @__PURE__ */ import_react6.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react6.default.createElement("path", { d: "M15.854 7.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708L14.293 8 8.146 1.854a.5.5 0 1 1 .708-.708l7 7z" }), /* @__PURE__ */ import_react6.default.createElement("path", { d: "M0 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z" }))
+      /* @__PURE__ */ import_react10.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" }, /* @__PURE__ */ import_react10.default.createElement("path", { d: "M15.854 7.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708L14.293 8 8.146 1.854a.5.5 0 1 1 .708-.708l7 7z" }), /* @__PURE__ */ import_react10.default.createElement("path", { d: "M0 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z" }))
     ))))));
   };
 
   // src/webview/styles.css
   var style2 = document.createElement("style");
-  style2.textContent = "/**\n * @SpecTrace cap-ui-semipilot\n * \n * Semipilot Chat Panel Styles - GitHub Copilot \u98CE\u683C\n */\n\n* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: var(--vscode-font-family);\n  color: var(--vscode-foreground);\n  background-color: var(--vscode-sideBar-background);\n  height: 100vh;\n  overflow: hidden;\n}\n\n.app-container {\n  display: flex;\n  flex-direction: column;\n  height: 100vh;\n}\n\n/* \u9876\u90E8\u6807\u9898\u680F */\n.header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 16px;\n  border-bottom: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-sideBar-background);\n  min-height: 40px;\n}\n\n.header-left {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.header-icon {\n  width: 16px;\n  height: 16px;\n  opacity: 0.8;\n}\n\n.header-title {\n  font-size: 11px;\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: 0.5px;\n  color: var(--vscode-foreground);\n}\n\n.header-actions {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.header-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-radius: 4px;\n  width: 24px;\n  height: 24px;\n  opacity: 0.8;\n  transition: all 0.15s;\n}\n\n.header-btn:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.header-btn svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}\n\n/* \u804A\u5929\u6D88\u606F\u533A\u57DF */\n.chat-messages {\n  flex: 1;\n  overflow-y: auto;\n  padding: 16px;\n}\n\n.empty-state {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  text-align: center;\n  color: var(--vscode-descriptionForeground);\n}\n\n.empty-state-icon {\n  font-size: 48px;\n  margin-bottom: 16px;\n  opacity: 0.6;\n}\n\n.empty-state-title {\n  font-size: 14px;\n  font-weight: 600;\n  margin-bottom: 8px;\n}\n\n.empty-state-subtitle {\n  font-size: 12px;\n  opacity: 0.8;\n}\n\n/* \u6D88\u606F\u9879 */\n.message {\n  margin-bottom: 16px;\n  padding: 12px 16px;\n  background: var(--vscode-editor-background);\n  border-radius: 8px;\n  position: relative;\n  line-height: 1.6;\n}\n\n.message:hover .message-actions {\n  opacity: 1;\n}\n\n.message-actions {\n  position: absolute;\n  top: 8px;\n  right: 8px;\n  opacity: 0;\n  transition: opacity 0.2s;\n  display: flex;\n  gap: 4px;\n}\n\n.message-copy-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px 6px;\n  border-radius: 4px;\n  font-size: 12px;\n  opacity: 0.7;\n  transition: all 0.15s;\n}\n\n.message-copy-btn:hover {\n  background: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n/* \u5E95\u90E8\u8F93\u5165\u533A\u57DF */\n.input-container {\n  border-top: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-sideBar-background);\n  padding: 12px;\n}\n\n.input-wrapper {\n  display: flex;\n  flex-direction: column;\n  gap: 0;\n  background-color: var(--vscode-input-background);\n  border: 1px solid var(--vscode-focusBorder);\n  border-radius: 8px;\n  overflow: hidden;\n  transition: border-color 0.2s;\n}\n\n.input-wrapper:focus-within {\n  border-color: var(--vscode-focusBorder);\n  box-shadow: 0 0 0 1px var(--vscode-focusBorder);\n}\n\n/* \u9876\u90E8 Add Context \u6309\u94AE */\n.input-header {\n  padding: 8px 12px;\n  border-bottom: 1px solid var(--vscode-panel-border);\n}\n\n.add-context-btn {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: transparent;\n  border: 1px solid var(--vscode-input-border);\n  color: var(--vscode-foreground);\n  padding: 6px 10px;\n  border-radius: 4px;\n  font-size: 12px;\n  cursor: pointer;\n  transition: all 0.15s;\n  opacity: 0.8;\n}\n\n.add-context-btn:hover {\n  background: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.add-context-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u4E2D\u95F4\u8F93\u5165\u533A */\n.input-main {\n  display: flex;\n  align-items: flex-start;\n  padding: 12px;\n  min-height: 80px;\n  flex: 1; /* \u81EA\u9002\u5E94\u4F38\u7F29 */\n}\n\n/* TipTap Editor */\n.tiptap-editor-wrapper {\n  width: 100%;\n  flex: 1;\n}\n\n.tiptap-editor-content {\n  width: 100%;\n}\n\n.ProseMirror {\n  outline: none;\n  min-height: 40px;\n  max-height: 200px;\n  overflow-y: auto;\n  width: 100%;\n  font-size: 13px;\n  line-height: 1.6;\n  color: var(--vscode-input-foreground);\n}\n\n.ProseMirror p.is-editor-empty:first-child::before {\n  color: var(--vscode-input-placeholderForeground);\n  content: attr(data-placeholder);\n  float: left;\n  height: 0;\n  pointer-events: none;\n}\n\n/* Mention Badge */\n.mention-badge {\n  background: var(--vscode-badge-background);\n  color: var(--vscode-badge-foreground);\n  border-radius: 4px;\n  padding: 2px 6px;\n  font-size: 11px;\n  font-weight: 500;\n}\n\n/* Mention Dropdown */\n.mention-dropdown {\n  background: var(--vscode-dropdown-background);\n  border: 1px solid var(--vscode-dropdown-border);\n  border-radius: 6px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n  padding: 4px;\n  max-height: 200px;\n  overflow-y: auto;\n  min-width: 200px;\n}\n\n.mention-item {\n  display: block;\n  width: 100%;\n  padding: 8px 12px;\n  border: none;\n  background: transparent;\n  color: var(--vscode-foreground);\n  cursor: pointer;\n  border-radius: 4px;\n  text-align: left;\n  transition: background-color 0.15s;\n}\n\n.mention-item:hover {\n  background: var(--vscode-list-hoverBackground);\n}\n\n.mention-item.selected {\n  background: var(--vscode-list-activeSelectionBackground);\n  color: var(--vscode-list-activeSelectionForeground);\n}\n\n.mention-item-content {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.mention-item-icon {\n  font-size: 16px;\n  opacity: 0.8;\n}\n\n.mention-item-text {\n  flex: 1;\n}\n\n.mention-item-label {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.mention-item-desc {\n  font-size: 10px;  /* \u66F4\u5C0F */\n  font-weight: 300;  /* \u66F4\u7EC6 */\n  color: var(--vscode-descriptionForeground);  /* \u66F4\u7070 */\n  opacity: 0.6;  /* \u964D\u4F4E\u4E0D\u900F\u660E\u5EA6 */\n  margin-top: 2px;\n}\n\n.mention-empty {\n  padding: 12px;\n  text-align: center;\n  color: var(--vscode-descriptionForeground);\n  font-size: 12px;\n}\n\n/* \u5E95\u90E8\u5DE5\u5177\u680F */\n.input-toolbar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 12px;\n  border-top: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-input-background);\n  gap: 8px;\n  font-size: 11px;\n  min-height: 40px; /* \u786E\u4FDD\u6700\u5C0F\u9AD8\u5EA6 */\n}\n\n.toolbar-left {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  flex: 1; /* \u5141\u8BB8\u6536\u7F29 */\n  min-width: 0; /* \u5141\u8BB8\u6536\u7F29\u52300 */\n  overflow: hidden; /* \u9690\u85CF\u6EA2\u51FA */\n}\n\n.toolbar-right {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  flex-shrink: 0; /* \u4E0D\u5141\u8BB8\u6536\u7F29\uFF0C\u786E\u4FDD\u6309\u94AE\u59CB\u7EC8\u53EF\u89C1 */\n}\n\n.toolbar-select {\n  background-color: transparent;\n  color: var(--vscode-descriptionForeground);\n  border: none;\n  padding: 4px 8px;\n  font-size: 11px;\n  cursor: pointer;\n  border-radius: 4px;\n  transition: all 0.15s;\n  opacity: 0.8;\n  white-space: nowrap; /* \u9632\u6B62\u6362\u884C */\n  overflow: hidden; /* \u9690\u85CF\u6EA2\u51FA */\n  text-overflow: ellipsis; /* \u663E\u793A\u7701\u7565\u53F7 */\n  min-width: 60px; /* \u6700\u5C0F\u5BBD\u5EA6 */\n  max-width: 150px; /* \u6700\u5927\u5BBD\u5EA6 */\n}\n\n.toolbar-select:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.toolbar-icon-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-radius: 4px;\n  width: 24px;\n  height: 24px;\n  opacity: 0.7;\n  transition: all 0.15s;\n}\n\n.toolbar-icon-btn:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.toolbar-icon-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n.toolbar-send-btn {\n  background: var(--vscode-button-background);\n  color: var(--vscode-button-foreground);\n  border: none;\n  border-radius: 4px;\n  padding: 4px 8px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: all 0.15s;\n  gap: 4px;\n  min-width: 32px; /* \u786E\u4FDD\u6700\u5C0F\u5BBD\u5EA6 */\n  flex-shrink: 0; /* \u4E0D\u5141\u8BB8\u6536\u7F29 */\n}\n\n.toolbar-send-btn:hover:not(:disabled) {\n  background: var(--vscode-button-hoverBackground);\n}\n\n.toolbar-send-btn:disabled {\n  opacity: 0.4;\n  cursor: not-allowed;\n  background: var(--vscode-button-secondaryBackground);\n}\n\n.toolbar-send-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u{1F41B} \u4FEE\u590D\u95EE\u98982\uFF1A\u505C\u6B62\u6309\u94AE\u6837\u5F0F */\n.toolbar-stop-btn {\n  background: var(--vscode-button-secondaryBackground);\n  color: var(--vscode-button-secondaryForeground);\n  border: 1px solid var(--vscode-button-border, transparent);\n  border-radius: 4px;\n  padding: 4px 8px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: all 0.15s;\n  gap: 4px;\n  min-width: 32px;\n  flex-shrink: 0;\n}\n\n.toolbar-stop-btn:hover {\n  background: var(--vscode-button-secondaryHoverBackground);\n}\n\n.toolbar-stop-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u52A0\u8F7D\u52A8\u753B\uFF08GitHub Copilot\u98CE\u683C + \u8BA1\u65F6\u5668\uFF09 */\n.loading-message {\n  background: transparent;\n  padding: 8px 16px;\n  display: flex;\n  align-items: center;\n}\n\n.loading-content {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n}\n\n.loading-dots {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.loading-dots .dot {\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  background-color: var(--vscode-foreground);\n  opacity: 0.4;\n  animation: pulse 1.4s ease-in-out infinite;\n}\n\n.loading-dots .dot:nth-child(1) {\n  animation-delay: 0s;\n}\n\n.loading-dots .dot:nth-child(2) {\n  animation-delay: 0.2s;\n}\n\n.loading-dots .dot:nth-child(3) {\n  animation-delay: 0.4s;\n}\n\n.loading-timer {\n  font-size: 11px;\n  color: var(--vscode-descriptionForeground);\n  font-variant-numeric: tabular-nums; /* \u7B49\u5BBD\u6570\u5B57 */\n  min-width: 30px; /* \u9632\u6B62\u8DF3\u52A8 */\n  text-align: right;\n}\n\n@keyframes pulse {\n  0%, 100% {\n    opacity: 0.4;\n    transform: scale(1);\n  }\n  50% {\n    opacity: 1;\n    transform: scale(1.2);\n  }\n}\n\n/* Markdown \u6E32\u67D3\u6837\u5F0F */\n.message-content {\n  line-height: 1.6;\n}\n\n/* \u7528\u6237\u6D88\u606F\u6837\u5F0F */\n.user-message .message-content {\n  color: var(--vscode-foreground);\n}\n\n/* AI \u6D88\u606F Markdown \u6837\u5F0F */\n.assistant-message .message-content {\n  color: var(--vscode-foreground);\n}\n\n.assistant-message .message-content h1,\n.assistant-message .message-content h2,\n.assistant-message .message-content h3,\n.assistant-message .message-content h4 {\n  margin-top: 16px;\n  margin-bottom: 8px;\n  font-weight: 600;\n  line-height: 1.3;\n}\n\n.assistant-message .message-content h1 { font-size: 1.5em; }\n.assistant-message .message-content h2 { font-size: 1.3em; }\n.assistant-message .message-content h3 { font-size: 1.1em; }\n\n.assistant-message .message-content p {\n  margin: 8px 0;\n}\n\n.assistant-message .message-content ul,\n.assistant-message .message-content ol {\n  margin: 8px 0;\n  padding-left: 24px;\n}\n\n.assistant-message .message-content li {\n  margin: 4px 0;\n}\n\n.assistant-message .message-content code {\n  background: var(--vscode-textCodeBlock-background);\n  color: var(--vscode-textPreformat-foreground);\n  padding: 2px 6px;\n  border-radius: 3px;\n  font-family: var(--vscode-editor-font-family);\n  font-size: 0.9em;\n}\n\n.assistant-message .message-content pre {\n  background: var(--vscode-textCodeBlock-background);\n  padding: 12px;\n  border-radius: 6px;\n  overflow-x: auto;\n  margin: 12px 0;\n}\n\n.assistant-message .message-content pre code {\n  background: transparent;\n  padding: 0;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.assistant-message .message-content blockquote {\n  border-left: 3px solid var(--vscode-textBlockQuote-border);\n  background: var(--vscode-textBlockQuote-background);\n  padding: 8px 12px;\n  margin: 12px 0;\n  color: var(--vscode-foreground);\n}\n\n.assistant-message .message-content table {\n  border-collapse: collapse;\n  margin: 12px 0;\n  width: 100%;\n}\n\n.assistant-message .message-content th,\n.assistant-message .message-content td {\n  border: 1px solid var(--vscode-panel-border);\n  padding: 6px 12px;\n  text-align: left;\n}\n\n.assistant-message .message-content th {\n  background: var(--vscode-editor-background);\n  font-weight: 600;\n}\n\n.assistant-message .message-content a {\n  color: var(--vscode-textLink-foreground);\n  text-decoration: none;\n}\n\n.assistant-message .message-content a:hover {\n  color: var(--vscode-textLink-activeForeground);\n  text-decoration: underline;\n}\n\n/* \u7528\u6237\u6D88\u606F\u4E2D\u7684\u4E0A\u4E0B\u6587\u6587\u4EF6\u5217\u8868 */\n.context-files {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n  padding-top: 8px;\n  border-top: 1px solid var(--vscode-panel-border);\n}\n\n.context-file-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  background: var(--vscode-badge-background);\n  color: var(--vscode-badge-foreground);\n  padding: 3px 8px;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 500;\n}\n";
+  style2.textContent = "/**\n * @SpecTrace cap-ui-semipilot\n * \n * Semipilot Chat Panel Styles - GitHub Copilot \u98CE\u683C\n */\n\n* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: var(--vscode-font-family);\n  color: var(--vscode-foreground);\n  background-color: var(--vscode-sideBar-background);\n  height: 100vh;\n  overflow: hidden;\n}\n\n/* Slice 4: CSS \u52A8\u753B\u5B9A\u4E49 */\n@keyframes fadeIn {\n  from {\n    opacity: 0;\n    transform: translateY(10px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n@keyframes fadeOut {\n  from {\n    opacity: 1;\n    transform: translateY(0);\n  }\n  to {\n    opacity: 0;\n    transform: translateY(-10px);\n  }\n}\n\n@keyframes breathe {\n  0%, 100% {\n    opacity: 1;\n  }\n  50% {\n    opacity: 0.6;\n  }\n}\n\n@keyframes spin {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n.app-container {\n  display: flex;\n  flex-direction: column;\n  height: 100vh;\n}\n\n/* \u9876\u90E8\u6807\u9898\u680F */\n.header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 16px;\n  border-bottom: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-sideBar-background);\n  min-height: 40px;\n}\n\n.header-left {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.header-icon {\n  width: 16px;\n  height: 16px;\n  opacity: 0.8;\n}\n\n.header-title {\n  font-size: 11px;\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: 0.5px;\n  color: var(--vscode-foreground);\n}\n\n.header-actions {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.header-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-radius: 4px;\n  width: 24px;\n  height: 24px;\n  opacity: 0.8;\n  transition: all 0.15s;\n}\n\n.header-btn:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.header-btn svg {\n  width: 16px;\n  height: 16px;\n  fill: currentColor;\n}\n\n/* \u804A\u5929\u6D88\u606F\u533A\u57DF */\n.chat-messages {\n  flex: 1;\n  overflow-y: auto;\n  padding: 16px;\n}\n\n.empty-state {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  text-align: center;\n  color: var(--vscode-descriptionForeground);\n}\n\n.empty-state-icon {\n  font-size: 48px;\n  margin-bottom: 16px;\n  opacity: 0.6;\n}\n\n.empty-state-title {\n  font-size: 14px;\n  font-weight: 600;\n  margin-bottom: 8px;\n}\n\n.empty-state-subtitle {\n  font-size: 12px;\n  opacity: 0.8;\n}\n\n/* \u6D88\u606F\u9879 */\n.message {\n  margin-bottom: 16px;\n  padding: 12px 16px;\n  background: var(--vscode-editor-background);\n  border-radius: 8px;\n  position: relative;\n  line-height: 1.6;\n}\n\n.message:hover .message-actions {\n  opacity: 1;\n}\n\n.message-actions {\n  position: absolute;\n  top: 8px;\n  right: 8px;\n  opacity: 0;\n  transition: opacity 0.2s;\n  display: flex;\n  gap: 4px;\n}\n\n.message-copy-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px 6px;\n  border-radius: 4px;\n  font-size: 12px;\n  opacity: 0.7;\n  transition: all 0.15s;\n}\n\n.message-copy-btn:hover {\n  background: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n/* \u5E95\u90E8\u8F93\u5165\u533A\u57DF */\n.input-container {\n  border-top: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-sideBar-background);\n  padding: 12px;\n}\n\n.input-wrapper {\n  display: flex;\n  flex-direction: column;\n  gap: 0;\n  background-color: var(--vscode-input-background);\n  border: 1px solid var(--vscode-focusBorder);\n  border-radius: 8px;\n  overflow: hidden;\n  transition: border-color 0.2s;\n}\n\n.input-wrapper:focus-within {\n  border-color: var(--vscode-focusBorder);\n  box-shadow: 0 0 0 1px var(--vscode-focusBorder);\n}\n\n/* \u9876\u90E8 Add Context \u6309\u94AE */\n.input-header {\n  padding: 8px 12px;\n  border-bottom: 1px solid var(--vscode-panel-border);\n}\n\n.add-context-btn {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  background: transparent;\n  border: 1px solid var(--vscode-input-border);\n  color: var(--vscode-foreground);\n  padding: 6px 10px;\n  border-radius: 4px;\n  font-size: 12px;\n  cursor: pointer;\n  transition: all 0.15s;\n  opacity: 0.8;\n}\n\n.add-context-btn:hover {\n  background: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.add-context-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u4E2D\u95F4\u8F93\u5165\u533A */\n.input-main {\n  display: flex;\n  align-items: flex-start;\n  padding: 12px;\n  min-height: 80px;\n  flex: 1; /* \u81EA\u9002\u5E94\u4F38\u7F29 */\n}\n\n/* TipTap Editor */\n.tiptap-editor-wrapper {\n  width: 100%;\n  flex: 1;\n}\n\n.tiptap-editor-content {\n  width: 100%;\n}\n\n.ProseMirror {\n  outline: none;\n  min-height: 40px;\n  max-height: 200px;\n  overflow-y: auto;\n  width: 100%;\n  font-size: 13px;\n  line-height: 1.6;\n  color: var(--vscode-input-foreground);\n}\n\n.ProseMirror p.is-editor-empty:first-child::before {\n  color: var(--vscode-input-placeholderForeground);\n  content: attr(data-placeholder);\n  float: left;\n  height: 0;\n  pointer-events: none;\n}\n\n/* Mention Badge */\n.mention-badge {\n  background: var(--vscode-badge-background);\n  color: var(--vscode-badge-foreground);\n  border-radius: 4px;\n  padding: 2px 6px;\n  font-size: 11px;\n  font-weight: 500;\n}\n\n/* Mention Dropdown */\n.mention-dropdown {\n  background: var(--vscode-dropdown-background);\n  border: 1px solid var(--vscode-dropdown-border);\n  border-radius: 6px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n  padding: 4px;\n  max-height: 200px;\n  overflow-y: auto;\n  min-width: 200px;\n}\n\n.mention-item {\n  display: block;\n  width: 100%;\n  padding: 8px 12px;\n  border: none;\n  background: transparent;\n  color: var(--vscode-foreground);\n  cursor: pointer;\n  border-radius: 4px;\n  text-align: left;\n  transition: background-color 0.15s;\n}\n\n.mention-item:hover {\n  background: var(--vscode-list-hoverBackground);\n}\n\n.mention-item.selected {\n  background: var(--vscode-list-activeSelectionBackground);\n  color: var(--vscode-list-activeSelectionForeground);\n}\n\n.mention-item-content {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.mention-item-icon {\n  font-size: 16px;\n  opacity: 0.8;\n}\n\n.mention-item-text {\n  flex: 1;\n}\n\n.mention-item-label {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.mention-item-desc {\n  font-size: 10px;  /* \u66F4\u5C0F */\n  font-weight: 300;  /* \u66F4\u7EC6 */\n  color: var(--vscode-descriptionForeground);  /* \u66F4\u7070 */\n  opacity: 0.6;  /* \u964D\u4F4E\u4E0D\u900F\u660E\u5EA6 */\n  margin-top: 2px;\n}\n\n.mention-empty {\n  padding: 12px;\n  text-align: center;\n  color: var(--vscode-descriptionForeground);\n  font-size: 12px;\n}\n\n/* \u5E95\u90E8\u5DE5\u5177\u680F */\n.input-toolbar {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 12px;\n  border-top: 1px solid var(--vscode-panel-border);\n  background-color: var(--vscode-input-background);\n  gap: 8px;\n  font-size: 11px;\n  min-height: 40px; /* \u786E\u4FDD\u6700\u5C0F\u9AD8\u5EA6 */\n}\n\n.toolbar-left {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  flex: 1; /* \u5141\u8BB8\u6536\u7F29 */\n  min-width: 0; /* \u5141\u8BB8\u6536\u7F29\u52300 */\n  overflow: hidden; /* \u9690\u85CF\u6EA2\u51FA */\n}\n\n.toolbar-right {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  flex-shrink: 0; /* \u4E0D\u5141\u8BB8\u6536\u7F29\uFF0C\u786E\u4FDD\u6309\u94AE\u59CB\u7EC8\u53EF\u89C1 */\n}\n\n.toolbar-select {\n  background-color: transparent;\n  color: var(--vscode-descriptionForeground);\n  border: none;\n  padding: 4px 8px;\n  font-size: 11px;\n  cursor: pointer;\n  border-radius: 4px;\n  transition: all 0.15s;\n  opacity: 0.8;\n  white-space: nowrap; /* \u9632\u6B62\u6362\u884C */\n  overflow: hidden; /* \u9690\u85CF\u6EA2\u51FA */\n  text-overflow: ellipsis; /* \u663E\u793A\u7701\u7565\u53F7 */\n  min-width: 60px; /* \u6700\u5C0F\u5BBD\u5EA6 */\n  max-width: 150px; /* \u6700\u5927\u5BBD\u5EA6 */\n}\n\n.toolbar-select:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.toolbar-icon-btn {\n  background: transparent;\n  border: none;\n  color: var(--vscode-icon-foreground);\n  cursor: pointer;\n  padding: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-radius: 4px;\n  width: 24px;\n  height: 24px;\n  opacity: 0.7;\n  transition: all 0.15s;\n}\n\n.toolbar-icon-btn:hover {\n  background-color: var(--vscode-toolbar-hoverBackground);\n  opacity: 1;\n}\n\n.toolbar-icon-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n.toolbar-send-btn {\n  background: var(--vscode-button-background);\n  color: var(--vscode-button-foreground);\n  border: none;\n  border-radius: 4px;\n  padding: 4px 8px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: all 0.15s;\n  gap: 4px;\n  min-width: 32px; /* \u786E\u4FDD\u6700\u5C0F\u5BBD\u5EA6 */\n  flex-shrink: 0; /* \u4E0D\u5141\u8BB8\u6536\u7F29 */\n}\n\n.toolbar-send-btn:hover:not(:disabled) {\n  background: var(--vscode-button-hoverBackground);\n}\n\n.toolbar-send-btn:disabled {\n  opacity: 0.4;\n  cursor: not-allowed;\n  background: var(--vscode-button-secondaryBackground);\n}\n\n.toolbar-send-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u{1F41B} \u4FEE\u590D\u95EE\u98982\uFF1A\u505C\u6B62\u6309\u94AE\u6837\u5F0F */\n.toolbar-stop-btn {\n  background: var(--vscode-button-secondaryBackground);\n  color: var(--vscode-button-secondaryForeground);\n  border: 1px solid var(--vscode-button-border, transparent);\n  border-radius: 4px;\n  padding: 4px 8px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: all 0.15s;\n  gap: 4px;\n  min-width: 32px;\n  flex-shrink: 0;\n}\n\n.toolbar-stop-btn:hover {\n  background: var(--vscode-button-secondaryHoverBackground);\n}\n\n.toolbar-stop-btn svg {\n  width: 14px;\n  height: 14px;\n}\n\n/* \u52A0\u8F7D\u52A8\u753B\uFF08GitHub Copilot\u98CE\u683C + \u8BA1\u65F6\u5668\uFF09 */\n.loading-message {\n  background: transparent;\n  padding: 8px 16px;\n  display: flex;\n  align-items: center;\n}\n\n.loading-content {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n}\n\n.loading-dots {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.loading-dots .dot {\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  background-color: var(--vscode-foreground);\n  opacity: 0.4;\n  animation: pulse 1.4s ease-in-out infinite;\n}\n\n.loading-dots .dot:nth-child(1) {\n  animation-delay: 0s;\n}\n\n.loading-dots .dot:nth-child(2) {\n  animation-delay: 0.2s;\n}\n\n.loading-dots .dot:nth-child(3) {\n  animation-delay: 0.4s;\n}\n\n.loading-timer {\n  font-size: 11px;\n  color: var(--vscode-descriptionForeground);\n  font-variant-numeric: tabular-nums; /* \u7B49\u5BBD\u6570\u5B57 */\n  min-width: 30px; /* \u9632\u6B62\u8DF3\u52A8 */\n  text-align: right;\n}\n\n@keyframes pulse {\n  0%, 100% {\n    opacity: 0.4;\n    transform: scale(1);\n  }\n  50% {\n    opacity: 1;\n    transform: scale(1.2);\n  }\n}\n\n/* Markdown \u6E32\u67D3\u6837\u5F0F */\n.message-content {\n  line-height: 1.6;\n}\n\n/* \u7528\u6237\u6D88\u606F\u6837\u5F0F */\n.user-message .message-content {\n  color: var(--vscode-foreground);\n}\n\n/* AI \u6D88\u606F Markdown \u6837\u5F0F */\n.assistant-message .message-content {\n  color: var(--vscode-foreground);\n}\n\n.assistant-message .message-content h1,\n.assistant-message .message-content h2,\n.assistant-message .message-content h3,\n.assistant-message .message-content h4 {\n  margin-top: 16px;\n  margin-bottom: 8px;\n  font-weight: 600;\n  line-height: 1.3;\n}\n\n.assistant-message .message-content h1 { font-size: 1.5em; }\n.assistant-message .message-content h2 { font-size: 1.3em; }\n.assistant-message .message-content h3 { font-size: 1.1em; }\n\n.assistant-message .message-content p {\n  margin: 8px 0;\n}\n\n.assistant-message .message-content ul,\n.assistant-message .message-content ol {\n  margin: 8px 0;\n  padding-left: 24px;\n}\n\n.assistant-message .message-content li {\n  margin: 4px 0;\n}\n\n.assistant-message .message-content code {\n  background: var(--vscode-textCodeBlock-background);\n  color: var(--vscode-textPreformat-foreground);\n  padding: 2px 6px;\n  border-radius: 3px;\n  font-family: var(--vscode-editor-font-family);\n  font-size: 0.9em;\n}\n\n.assistant-message .message-content pre {\n  background: var(--vscode-textCodeBlock-background);\n  padding: 12px;\n  border-radius: 6px;\n  overflow-x: auto;\n  margin: 12px 0;\n}\n\n.assistant-message .message-content pre code {\n  background: transparent;\n  padding: 0;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.assistant-message .message-content blockquote {\n  border-left: 3px solid var(--vscode-textBlockQuote-border);\n  background: var(--vscode-textBlockQuote-background);\n  padding: 8px 12px;\n  margin: 12px 0;\n  color: var(--vscode-foreground);\n}\n\n.assistant-message .message-content table {\n  border-collapse: collapse;\n  margin: 12px 0;\n  width: 100%;\n}\n\n.assistant-message .message-content th,\n.assistant-message .message-content td {\n  border: 1px solid var(--vscode-panel-border);\n  padding: 6px 12px;\n  text-align: left;\n}\n\n.assistant-message .message-content th {\n  background: var(--vscode-editor-background);\n  font-weight: 600;\n}\n\n.assistant-message .message-content a {\n  color: var(--vscode-textLink-foreground);\n  text-decoration: none;\n}\n\n.assistant-message .message-content a:hover {\n  color: var(--vscode-textLink-activeForeground);\n  text-decoration: underline;\n}\n\n/* \u7528\u6237\u6D88\u606F\u4E2D\u7684\u4E0A\u4E0B\u6587\u6587\u4EF6\u5217\u8868 */\n.context-files {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n  padding-top: 8px;\n  border-top: 1px solid var(--vscode-panel-border);\n}\n\n.context-file-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  background: var(--vscode-badge-background);\n  color: var(--vscode-badge-foreground);\n  padding: 3px 8px;\n  border-radius: 4px;\n  font-size: 11px;\n  font-weight: 500;\n}\n\n/* Workflow Card \u5448\u547C\u5438\u52A8\u753B\uFF08Slice 4: \u68A6\u5E7B\u7D2B\u8272\u7CFB\uFF09 */\n@keyframes breathe {\n  0%, 100% {\n    opacity: 1;\n    transform: scale(1);\n  }\n  50% {\n    opacity: 0.6;\n    transform: scale(1.05);\n  }\n}\n\n@keyframes spin {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
   document.head.appendChild(style2);
 
   // node_modules/highlight.js/styles/github-dark.css
@@ -76045,7 +77058,7 @@ ${helpMessage}`,
     }
     const root4 = import_client.default.createRoot(rootElement);
     root4.render(
-      /* @__PURE__ */ import_react7.default.createElement(import_react7.default.StrictMode, null, /* @__PURE__ */ import_react7.default.createElement(App, null))
+      /* @__PURE__ */ import_react11.default.createElement(import_react11.default.StrictMode, null, /* @__PURE__ */ import_react11.default.createElement(App, null))
     );
   } catch (error) {
     console.error("[Webview] Error mounting React app:", error);

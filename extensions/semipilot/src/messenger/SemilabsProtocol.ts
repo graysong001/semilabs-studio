@@ -133,10 +133,20 @@ export interface ClearDraftRequest {
   sessionId: string;
 }
 
+export interface CommitDraftRequest {
+  sessionId: string;
+  targetFile: string;
+}
+
 export interface DraftResponse {
   success: boolean;
   data?: WorkflowEvent;
   error?: string;
+}
+
+export interface DraftPreviewResponse {
+  original: string;
+  modified: string;
 }
 
 /**
@@ -192,6 +202,8 @@ export interface FromExtensionProtocol extends IProtocol {
   // Draft API (Slice 4)
   'draft/upsert': [UpsertDraftRequest, DraftResponse];
   'draft/clear': [ClearDraftRequest, DraftResponse];
+  'draft/commit': [CommitDraftRequest, DraftResponse];
+  'draft/preview': [{ targetFile: string }, DraftPreviewResponse];
   
   // Workflow API (Slice 4)
   'workflow/submit': [SubmitWorkflowRequest, WorkflowResponse];

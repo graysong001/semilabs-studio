@@ -395,6 +395,50 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
         },
       });
       
+      // TODO(临时）：模拟 DRAFT_UPDATED 事件，用于测试前端 UI
+      // 正式实现需要后端 Poe Agent 创建 Draft 并通过 SSE 推送
+      if (response.persona === 'poe') {
+        // 模拟一个 Draft 内容
+        const mockDraftContent = `---
+productId: semilabs-squad
+specId: draft-${Date.now()}
+version: 1.0.0
+type: FEATURE
+---
+
+## 1. Core Objectives
+- [ ] 实现 SMS 登录功能
+- [ ] 支持验证码发送
+- [ ] 支持验证码验证
+
+## 2. Constraints & Rules
+- [ ] 验证码 6 位数字
+- [ ] 验证码 5 分钟有效期
+- [ ] 防止频繁发送（同一手机号 60s 内只能发送一次）
+
+## 3. Pending Questions
+- [ ] 使用哪家 SMS 服务商？（阿里云/腾讯云/Twilio）
+- [ ] 是否需要国际化支持？
+`;
+        
+        // 500ms 后发送 DRAFT_UPDATED 事件
+        setTimeout(() => {
+          this._view?.webview.postMessage({
+            type: 'workflowEvent',
+            event: {
+              type: 'DRAFT_UPDATED',
+              target: `temp/intent_draft_${Date.now()}.md`,
+              workflowState: 'DRAFTING',
+              payload: {
+                content: mockDraftContent,
+              },
+              timestamp: new Date().toISOString(),
+            },
+          });
+          console.log('[SemipilotWebviewProvider] Sent mock DRAFT_UPDATED event');
+        }, 500);
+      }
+      
     } catch (error) {
       console.error('[SemipilotWebviewProvider] Error sending message:', error);
       

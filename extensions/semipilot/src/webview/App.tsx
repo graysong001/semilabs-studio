@@ -11,6 +11,9 @@ import rehypeHighlight from 'rehype-highlight';
 import { TipTapEditor, TipTapEditorRef } from './TipTapEditor';
 import { SlashCommandHandler } from './SlashCommandHandler';
 import { WorkflowCard } from './WorkflowCard';
+import { DraftStagingWidget } from './DraftStagingWidget';
+import { IntentProposalCard } from './IntentProposalCard';
+import { TribunalCard } from './TribunalCard';
 
 interface Message {
   id: string;
@@ -18,6 +21,8 @@ interface Message {
   isUser: boolean;
   timestamp: number;
   contextItems?: ContextItem[]; // 添加上下文项
+  type?: 'message' | 'proposalCard' | 'tribunalCard'; // 消息类型
+  metadata?: any; // 附加元数据（用于卡片）
 }
 
 interface ContextItem {
@@ -38,6 +43,10 @@ export const App: React.FC = () => {
   const vscodeRef = React.useRef<VsCodeApi | null>(null);
   const editorRef = React.useRef<TipTapEditorRef>(null); // TipTap Editor 引用
   const slashHandlerRef = useRef<SlashCommandHandler>(new SlashCommandHandler());
+  
+  // Slice 4: Workflow 事件状态
+  const [proposalCardData, setProposalCardData] = useState<any>(null);
+  const [tribunalCardData, setTribunalCardData] = useState<any>(null);
   
   // 保存 Context Provider 查询的 Promise resolvers
   const contextQueryResolversRef = React.useRef<Map<string, (results: ContextItem[]) => void>>(new Map());
@@ -125,6 +134,32 @@ export const App: React.FC = () => {
               timestamp: message.message.timestamp || Date.now()
             };
             setMessages(prev => [...prev, assistantMsg]);
+          }
+          break;
+        case 'workflowEvent':
+          // Slice 4: 处理 Workflow 事件
+          const workflowEvent = message.event;
+          
+          if (workflowEvent.type === 'PROPOSAL_READY') {
+            // 显示 IntentProposalCard
+            setProposalCardData({
+              summary: workflowEvent.payload?.summary || 'Draft is ready to be crystallized into a formal Spec.',
+              targetFile: workflowEvent.target,
+              confidence: workflowEvent.payload?.confidence || 0,
+            });
+          } else if (workflowEvent.type === 'VETO_APPLIED' || workflowEvent.type === 'FIX_SUBMITTED') {
+            // 显示 TribunalCard
+            setTribunalCardData({
+              vetoReason: workflowEvent.payload?.reason || 'Architecture constraint violated',
+              vetoRequirement: workflowEvent.payload?.suggestion || workflowEvent.payload?.requirement,
+              fixSummary: workflowEvent.payload?.fixSummary,
+              targetFile: workflowEvent.target,
+              workflowState: workflowEvent.workflowState,
+            });
+          } else if (workflowEvent.type === 'WORKFLOW_APPROVED') {
+            // 清除卡片
+            setProposalCardData(null);
+            setTribunalCardData(null);
           }
           break;
         case 'contextProviderResults':
@@ -373,6 +408,78 @@ export const App: React.FC = () => {
     setMessages(prev => [...prev, operationMsg]);
   }, []);
 
+  /**
+   * Slice 4: 处理 Generate Spec 操作
+   */
+  const handleGenerateSpec = useCallback(async (targetFile: string) => {
+    console.log('[App] Generate Spec:', targetFile);
+    
+    if (vscodeRef.current) {
+      vscodeRef.current.postMessage({
+        type: 'commitDraft',
+        targetFile,
+      });
+    }
+    
+    // 清除 Proposal Card
+    setProposalCardData(null);
+    
+    // 在 Chat 流中插入操作卡片
+    const fileName = targetFile.split(/[\/\\]/).pop() || targetFile;
+    const operationMsg: Message = {
+      id: Date.now().toString(),
+      content: `🚀 **Generate Spec**
+
+目标: \`${fileName}\`
+
+⏳ 正在生成 Spec...`,
+      isUser: false,
+      timestamp: Date.now(),
+    };
+    setMessages(prev => [...prev, operationMsg]);
+  }, []);
+
+  /**
+   * Slice 4: 处理 Approve Fix 操作
+   */
+  const handleApproveFix = useCallback(async (targetFile: string) => {
+    console.log('[App] Approve Fix:', targetFile);
+    
+    // 调用 Workflow Resolve API
+    handleWorkflowAction('resolve', targetFile, { userApproved: true });
+    
+    // 清除 Tribunal Card
+    setTribunalCardData(null);
+  }, [handleWorkflowAction]);
+
+  /**
+   * Slice 4: 处理 View Diff 操作
+   */
+  const handleViewDiff = useCallback((targetFile: string) => {
+    console.log('[App] View Diff:', targetFile);
+    
+    if (vscodeRef.current) {
+      vscodeRef.current.postMessage({
+        type: 'viewDiff',
+        filePath: targetFile,
+      });
+    }
+  }, []);
+
+  /**
+   * Slice 4: 处理 Open File 操作
+   */
+  const handleOpenFile = useCallback((filePath: string) => {
+    console.log('[App] Open File:', filePath);
+    
+    if (vscodeRef.current) {
+      vscodeRef.current.postMessage({
+        type: 'openFile',
+        filePath,
+      });
+    }
+  }, []);
+
   return (
     <div className="app-container">
       {/* 顶部标题栏 */}
@@ -487,9 +594,36 @@ export const App: React.FC = () => {
                 </div>
               </div>
             )}
+            
+            {/* Slice 4: IntentProposalCard */}
+            {proposalCardData && (
+              <IntentProposalCard
+                summary={proposalCardData.summary}
+                targetFile={proposalCardData.targetFile}
+                confidence={proposalCardData.confidence}
+                onGenerate={handleGenerateSpec}
+                onCancel={() => setProposalCardData(null)}
+              />
+            )}
+            
+            {/* Slice 4: TribunalCard */}
+            {tribunalCardData && (
+              <TribunalCard
+                vetoReason={tribunalCardData.vetoReason}
+                vetoRequirement={tribunalCardData.vetoRequirement}
+                fixSummary={tribunalCardData.fixSummary}
+                targetFile={tribunalCardData.targetFile}
+                workflowState={tribunalCardData.workflowState}
+                onViewDiff={handleViewDiff}
+                onApproveFix={handleApproveFix}
+              />
+            )}
           </>
         )}
       </div>
+
+      {/* Slice 4: DraftStagingWidget - 位于消息列表和 WorkflowCard 之间 */}
+      <DraftStagingWidget onOpenFile={handleOpenFile} />
 
       {/* Workflow Card - 位于消息列表和输入框之间 */}
       <WorkflowCard onAction={handleWorkflowAction} />

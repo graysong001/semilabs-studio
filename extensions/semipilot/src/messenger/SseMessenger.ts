@@ -326,6 +326,8 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       // Draft API (Slice 4)
       'draft/upsert': { method: 'POST', path: '/api/v1/draft/upsert' },
       'draft/clear': { method: 'POST', path: '/api/v1/draft/clear' },
+      'draft/commit': { method: 'POST', path: '/api/v1/draft/commit' },
+      'draft/preview': { method: 'GET', path: '/api/v1/draft/preview' },
       // Workflow API (Slice 4)
       'workflow/submit': { method: 'POST', path: '/api/v1/workflow/submit' },
       'workflow/veto': { method: 'POST', path: '/api/v1/workflow/veto' },
@@ -360,6 +362,12 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       }
       if ('executionId' in data) {
         path = path.replace(':executionId', String((data as any).executionId));
+      }
+      // Slice 4: 处理 GET 请求的查询参数
+      if (endpoint.method === 'GET' && 'targetFile' in data) {
+        const params = new URLSearchParams({ targetFile: String((data as any).targetFile) });
+        path = `${path}?${params.toString()}`;
+        requestBody = undefined; // GET 请求不发送 body
       }
     }
     
