@@ -11,7 +11,7 @@ import rehypeHighlight from 'rehype-highlight';
 import { TipTapEditor, TipTapEditorRef } from './TipTapEditor';
 import { SlashCommandHandler } from './SlashCommandHandler';
 import { WorkflowCard } from './WorkflowCard';
-import { DraftStagingWidget } from './DraftStagingWidget';
+import { ReasoningDeck } from './ReasoningDeck';
 import { IntentProposalCard } from './IntentProposalCard';
 import { TribunalCard } from './TribunalCard';
 
@@ -156,6 +156,18 @@ export const App: React.FC = () => {
               targetFile: workflowEvent.target,
               workflowState: workflowEvent.workflowState,
             });
+            
+            // 同时在聊天记录中插入一条提示
+            if (workflowEvent.type === 'VETO_APPLIED') {
+              const loopInfo = workflowEvent.payload?.loopCount !== undefined ? ` (Round ${workflowEvent.payload.loopCount + 1}/3)` : '';
+              const vetoMsg: Message = {
+                id: `veto-${Date.now()}`,
+                content: `🛑 **ARCHI VETO**${loopInfo}\n\nArchi 发现了架构不一致，正在打回 Poe 修正。`,
+                isUser: false,
+                timestamp: Date.now(),
+              };
+              setMessages(prev => [...prev, vetoMsg]);
+            }
           } else if (workflowEvent.type === 'WORKFLOW_APPROVED') {
             // 清除卡片
             setProposalCardData(null);
@@ -358,47 +370,42 @@ export const App: React.FC = () => {
   }, []);
 
   /**
-   * 处理 Workflow 操作（Submit / Veto / Resolve）
-   * Slice 4: 调用后端 API 并在 Chat 流中插入操作卡片
+   * 处理 Workflow 操作（Submit / Veto / Resolve / Approve / Archive）
+   * V7 S3: 调用后端 Staging API 并在 Chat 流中插入操作卡片
    */
-  const handleWorkflowAction = useCallback((action: 'submit' | 'veto' | 'resolve', target: string, params?: any) => {
-    console.log('[App] Workflow action:', action, target, params);
+  const handleWorkflowAction = useCallback((action: 'submit' | 'veto' | 'approve' | 'archive', domain: string, specId: string, params?: any) => {
+    console.log('[App] Staging action:', action, domain, specId, params);
     
     // 1. 发送到 Extension Host
     if (vscodeRef.current) {
       vscodeRef.current.postMessage({
         type: 'workflowAction',
         action,
-        target,
+        domain,
+        specId,
         params,
       });
     }
     
-    // 2. 在 Chat 流中插入操作卡片（类似 Tool Card）
+    // 2. 在 Chat 流中插入操作卡片
     const actionNames: Record<string, string> = {
       submit: 'Submit for Review',
       veto: 'Veto',
-      resolve: 'Resolve',
+      approve: 'Approve',
+      archive: 'Archive Spec',
     };
     
-    const fileName = target.split(/[\/\\]/).pop() || target;
     let operationDetail = '';
-    
     if (action === 'veto' && params?.reason) {
       operationDetail = `\n**原因**: ${params.reason}`;
-      if (params.suggestion) {
-        operationDetail += `\n**建议**: ${params.suggestion}`;
-      }
-    } else if (action === 'resolve') {
-      operationDetail = '\n✅ 用户确认已修复';
     }
     
     const operationMsg: Message = {
       id: Date.now().toString(),
-      content: `🛠️ **Workflow 操作**
-
+      content: `🛠️ **Staging 操作**
+      
 操作: **${actionNames[action]}**
-目标: \`${fileName}\`${operationDetail}
+目标: \`${domain}/${specId}\`${operationDetail}
 
 ⏳ 正在处理...`,
       isUser: false,
@@ -445,8 +452,13 @@ export const App: React.FC = () => {
   const handleApproveFix = useCallback(async (targetFile: string) => {
     console.log('[App] Approve Fix:', targetFile);
     
-    // 调用 Workflow Resolve API
-    handleWorkflowAction('resolve', targetFile, { userApproved: true });
+    // 调用 Workflow Approve API
+    // 解析 domain 和 specId
+    const parts = targetFile.split('/');
+    const domain = parts.length > 1 ? parts[parts.length - 2] : 'squad';
+    const specId = parts[parts.length - 1].replace('.md', '');
+    
+    handleWorkflowAction('approve', domain, specId);
     
     // 清除 Tribunal Card
     setTribunalCardData(null);
@@ -466,32 +478,18 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  /**
-   * Slice 4: 处理 Open File 操作
-   */
-  const handleOpenFile = useCallback((filePath: string) => {
-    console.log('[App] Open File:', filePath);
-    
-    if (vscodeRef.current) {
-      vscodeRef.current.postMessage({
-        type: 'openFile',
-        filePath,
-      });
-    }
-  }, []);
-
   return (
     <div className="app-container">
       {/* 顶部标题栏 */}
-      <div className="header">
+      <div className="header" style={{ borderBottom: '1px solid var(--semipilot-purple-glow)', background: 'linear-gradient(90deg, var(--vscode-sideBar-background) 0%, rgba(142, 68, 173, 0.05) 100%)' }}>
         <div className="header-left">
-          {/* 机器人图标 (SVG 黑白) */}
-          <svg className="header-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          {/* 机器人图标 (紫色) */}
+          <svg className="header-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="var(--semipilot-purple-light)">
             <path d="M8.5 1a.5.5 0 0 0-1 0v1h-1a.5.5 0 0 0 0 1h1v.5A2.5 2.5 0 0 0 5 6v1H3.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5H11V6a2.5 2.5 0 0 0-2.5-2.5V3h1a.5.5 0 0 0 0-1h-1V1zM6 6a1.5 1.5 0 0 1 3 0v1H6V6z"/>
             <circle cx="6" cy="9" r=".5"/>
             <circle cx="10" cy="9" r=".5"/>
           </svg>
-          <span className="header-title">SEMIPILOT: CHAT</span>
+          <span className="header-title" style={{ color: 'var(--semipilot-purple-light)' }}>SEMIPILOT</span>
         </div>
         <div className="header-actions">
           {/* New Chat */}
@@ -548,30 +546,33 @@ export const App: React.FC = () => {
                       )}
                     </>
                   ) : (
-                    // AI 回复：Markdown 渲染
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
-                      components={{
-                        code(props: any) {
-                          const { node, inline, className, children, ...rest } = props;
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <pre className={`language-${match[1]}`}>
+                    // AI 回复：结构化推理投影 + Markdown 渲染
+                    <>
+                      <ReasoningDeck content={msg.content} />
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeHighlight]}
+                        components={{
+                          code(props: any) {
+                            const { node, inline, className, children, ...rest } = props;
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <pre className={`language-${match[1]}`}>
+                                <code className={className} {...rest}>
+                                  {children}
+                                </code>
+                              </pre>
+                            ) : (
                               <code className={className} {...rest}>
                                 {children}
                               </code>
-                            </pre>
-                          ) : (
-                            <code className={className} {...rest}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
+                            );
+                          },
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </>
                   )}
                 </div>
                 <div className="message-actions">
@@ -621,9 +622,6 @@ export const App: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Slice 4: DraftStagingWidget - 位于消息列表和 WorkflowCard 之间 */}
-      <DraftStagingWidget onOpenFile={handleOpenFile} />
 
       {/* Workflow Card - 位于消息列表和输入框之间 */}
       <WorkflowCard onAction={handleWorkflowAction} />

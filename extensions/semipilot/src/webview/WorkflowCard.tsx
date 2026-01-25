@@ -1,19 +1,23 @@
 /**
  * @SpecTrace cap-ui-semipilot
  * 
- * Workflow Card Component
+ * Workflow Deck Component (V7 S3)
  * 
- * 可折叠 Workflow 状态卡片，位于 Chat 消息流和输入框之间
- * - 默认折叠，仅显示动态状态卡片头
- * - 梦幻紫色系（#8E44AD 主色 + 状态色映射）
- * - Submit / Veto / Resolve 操作按钮
- * - 操作行为写入 Chat 流（类似 Tool Card）
+ * 展示当前项目下所有 Staging Spec 列表及其状态
  */
 
 import React, { useState, useEffect } from 'react';
 
+export interface StagingSpec {
+  specId: string;
+  domain: string;
+  path: string;
+  workflowState?: string;
+  densityPhase?: string;
+}
+
 export interface WorkflowEvent {
-  type: 'DRAFT_UPDATED' | 'PROPOSAL_READY' | 'REVIEW_SUBMITTED' | 'VETO_APPLIED' | 'FIX_SUBMITTED' | 'WORKFLOW_APPROVED';
+  type: 'DRAFT_UPDATED' | 'PROPOSAL_READY' | 'REVIEW_SUBMITTED' | 'VETO_APPLIED' | 'FIX_SUBMITTED' | 'WORKFLOW_APPROVED' | 'PHASE_STARTED' | 'PHASE_COMPLETED' | 'STAGING_UPDATED' | 'STAGING_MERGE_READY' | 'STAGING_MERGED';
   target: string; // Spec 文件路径
   workflowState: string; // 当前 workflow_state
   payload?: Record<string, any>;
@@ -21,275 +25,195 @@ export interface WorkflowEvent {
 }
 
 interface WorkflowCardProps {
-  onAction: (action: 'submit' | 'veto' | 'resolve', target: string, params?: any) => void;
-}
-
-interface StatusDisplay {
-  text: string;
-  color: string;
-  icon: string;
-  animate: boolean;
+  onAction: (action: 'submit' | 'veto' | 'approve' | 'archive', domain: string, specId: string, params?: any) => void;
 }
 
 export const WorkflowCard: React.FC<WorkflowCardProps> = ({ onAction }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<WorkflowEvent | null>(null);
-  const [recentEvents, setRecentEvents] = useState<WorkflowEvent[]>([]);
+  const [specs, setSpecs] = useState<StagingSpec[]>([]);
+  const [lastEvent, setLastEvent] = useState<WorkflowEvent | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // 监听来自 Extension Host 的 workflow 事件
+  // 监听来自 Extension Host 的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
       
-      if (message.type === 'workflowEvent') {
-        const workflowEvent: WorkflowEvent = message.event;
-        
-        // 更新当前事件
-        setCurrentEvent(workflowEvent);
-        
-        // 添加到历史（最多保留 5 条）
-        setRecentEvents(prev => {
-          const updated = [workflowEvent, ...prev].slice(0, 5);
-          return updated;
-        });
-        
-        // 自动展开 REJECTED / FIXING 等需要用户决策的状态
-        if (workflowEvent.workflowState === 'REJECTED' || workflowEvent.workflowState === 'FIXING') {
-          setIsExpanded(true);
-        }
-        
+      if (message.type === 'stagingListUpdated') {
+        setSpecs(message.specs || []);
         setIsConnected(true);
+      } else if (message.type === 'workflowEvent') {
+        setLastEvent(message.event);
+        // 收到事件时刷新列表
+        const vscode = (window as any).__vscodeApi;
+        if (vscode) {
+          vscode.postMessage({ type: 'refreshStagingList' });
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
+    
+    // 初始获取列表
+    const vscode = (window as any).__vscodeApi;
+    if (vscode) {
+      vscode.postMessage({ type: 'refreshStagingList' });
+    }
+
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // 获取状态展示信息
-  const getStatusDisplay = (event: WorkflowEvent | null): StatusDisplay => {
-    if (!event) {
-      return {
-        text: '等待 Workflow 事件...',
-        color: '#888',
-        icon: '⏳',
-        animate: false,
-      };
-    }
-
-    switch (event.type) {
-      case 'DRAFT_UPDATED':
-        return {
-          text: '📝 草稿更新中...',
-          color: '#A569BD',
-          icon: '📝',
-          animate: false,
-        };
-      case 'REVIEW_SUBMITTED':
-        return {
-          text: '🔄 已提交给 Archi 审批',
-          color: '#BB8FCE',
-          icon: '🔄',
-          animate: true, // 呼吸 + 旋转
-        };
-      case 'VETO_APPLIED':
-        return {
-          text: '❌ Archi 打回 - 需修复',
-          color: '#E74C3C',
-          icon: '❌',
-          animate: false,
-        };
-      case 'FIX_SUBMITTED':
-        return {
-          text: '🔧 修复中，待重新审批',
-          color: '#A569BD',
-          icon: '🔧',
-          animate: false,
-        };
-      case 'WORKFLOW_APPROVED':
-        return {
-          text: '✅ Archi 已批准',
-          color: '#27AE60',
-          icon: '✅',
-          animate: false,
-        };
-      default:
-        return {
-          text: event.workflowState,
-          color: '#8E44AD',
-          icon: '📋',
-          animate: false,
-        };
+  // 获取状态色
+  const getStateColor = (state?: string) => {
+    switch (state) {
+      case 'DEFINING': return '#A569BD'; // 浅紫
+      case 'READY_FOR_USER_APPROVAL': return '#F1C40F'; // 警告黄 (需要确认)
+      case 'PENDING_REVIEW': return '#BB8FCE'; // 柔紫
+      case 'READY_FOR_IMPLEMENTATION': return '#27AE60'; // 成功绿
+      case 'VETOED': return '#E67E22'; // 橙色 (被驳回)
+      case 'REJECTED': return '#E74C3C'; // 警告红
+      case 'MERGE_READY': return '#3498DB'; // 进度蓝
+      default: return '#888';
     }
   };
 
-  const statusDisplay = getStatusDisplay(currentEvent);
+  const getFileName = (path: string) => path.split(/[/\\]/).pop() || path;
 
-  // 获取文件名（从路径提取）
-  const getFileName = (filePath: string): string => {
-    return filePath.split(/[/\\]/).pop() || filePath;
-  };
+  const canArchiveAll = specs.length > 0 && specs.every(s => s.workflowState === 'MERGE_READY');
 
-  // 处理操作按钮点击
-  const handleAction = (action: 'submit' | 'veto' | 'resolve') => {
-    if (!currentEvent) return;
-
-    // 根据操作类型收集参数
-    let params: any = {};
-    if (action === 'veto') {
-      const reason = prompt('请输入 Veto 原因：');
-      if (!reason) return;
-      params.reason = reason;
-      params.suggestion = prompt('请输入改进建议（可选）：') || '';
-    } else if (action === 'resolve') {
-      const confirmed = confirm('确认已修复问题？');
-      if (!confirmed) return;
-      params.userApproved = true;
+  const handleArchiveAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm(`Are you sure you want to archive all ${specs.length} specs and clear the staging area?`)) {
+      specs.forEach(spec => onAction('archive', spec.domain, spec.specId));
     }
-
-    onAction(action, currentEvent.target, params);
   };
 
-  // 如果没有事件且未连接，不渲染
-  if (!currentEvent && !isConnected) {
-    return null;
-  }
+  // 获取事件描述文本 (V7 Visibility)
+  const getEventDisplayText = (event: WorkflowEvent) => {
+    if (event.type === 'PHASE_STARTED') {
+      const persona = event.payload?.persona || 'Agent';
+      const phase = event.payload?.phase || event.workflowState;
+      const loop = event.payload?.loopCount !== undefined ? ` (Round ${event.payload.loopCount + 1})` : '';
+      return `${persona} is ${phase}${loop}...`;
+    }
+    if (event.type === 'VETO_APPLIED') {
+      return `🛑 ARCHI VETO (Round ${event.payload?.loopCount + 1})`;
+    }
+    return event.type;
+  };
 
   return (
     <div style={styles.container}>
-      {/* 卡片头（折叠态） */}
+      {/* Deck Header */}
       <div 
         style={{
           ...styles.header,
           backgroundColor: isExpanded ? '#2D2D30' : '#252526',
+          borderBottom: isExpanded ? '1px solid #3E3E42' : 'none',
         }}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <span style={styles.expandIcon}>
-          {isExpanded ? '▼' : '▸'}
-        </span>
-        <span style={styles.title}>Workflow</span>
-        <span style={styles.separator}>|</span>
+        <span style={{
+          ...styles.expandIcon,
+          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s ease',
+        }}>▸</span>
+        <span style={styles.title}>STAGING DECK</span>
+        <span style={styles.countBadge}>{specs.length}</span>
         
-        {/* 动态状态文案 */}
-        <span 
-          style={{
-            ...styles.statusText,
-            color: statusDisplay.color,
-            animation: statusDisplay.animate ? 'breathe 2s ease-in-out infinite' : 'none',
-          }}
-        >
-          {statusDisplay.icon} {statusDisplay.text}
-        </span>
+        <div style={{ flex: 1 }} />
         
-        {currentEvent && (
-          <>
-            <span style={styles.separator}>|</span>
-            <span style={styles.fileName}>{getFileName(currentEvent.target)}</span>
-            <span style={styles.separator}>•</span>
-            <span style={styles.state}>{currentEvent.workflowState}</span>
-          </>
+        {canArchiveAll && (
+          <button 
+            style={{...styles.miniButton, backgroundColor: '#27AE60', marginRight: '12px'}} 
+            onClick={handleArchiveAll}
+          >
+            🚢 Archive All
+          </button>
         )}
         
-        <span style={styles.separator}>|</span>
+        {lastEvent && (
+          <span style={{ 
+            ...styles.lastEvent, 
+            color: getStateColor(lastEvent.workflowState),
+            animation: 'breathe 2s ease-in-out infinite',
+          }}>
+            {lastEvent.workflowState === 'REJECTED' || lastEvent.type === 'VETO_APPLIED' ? '⚠️' : '✨'} {getEventDisplayText(lastEvent)}
+          </span>
+        )}
+        
         <span style={{
           ...styles.connectionStatus,
           color: isConnected ? '#27AE60' : '#888',
         }}>
-          {isConnected ? '● Live' : '○ Disconnected'}
+          {isConnected ? 'LIVE' : 'OFFLINE'}
         </span>
       </div>
 
-      {/* 展开态内容 */}
-      {isExpanded && currentEvent && (
+      {/* Deck Content (List of Specs) */}
+      {isExpanded && (
         <div style={styles.content}>
-          {/* 顶部：当前状态概览 */}
-          <div style={styles.overview}>
-            <div style={styles.overviewRow}>
-              <span style={styles.label}>当前阶段：</span>
-              <span style={{ color: statusDisplay.color, fontWeight: 'bold' }}>
-                {currentEvent.workflowState}
-              </span>
-            </div>
-            {currentEvent.timestamp && (
-              <div style={styles.overviewRow}>
-                <span style={styles.label}>最近更新：</span>
-                <span style={styles.timestamp}>
-                  {new Date(currentEvent.timestamp).toLocaleString()}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* 中部：最近 5 条事件时间线 */}
-          {recentEvents.length > 0 && (
-            <div style={styles.timeline}>
-              <div style={styles.timelineTitle}>最近事件</div>
-              {recentEvents.map((event, index) => (
-                <div key={`${event.timestamp}-${index}`} style={styles.timelineItem}>
-                  <span style={styles.timelineIcon}>{getStatusDisplay(event).icon}</span>
-                  <span style={styles.timelineType}>{event.type}</span>
-                  <span style={styles.timelineSeparator}>-</span>
-                  <span style={styles.timelineTarget}>{getFileName(event.target)}</span>
-                  {event.timestamp && (
-                    <span style={styles.timelineTime}>
-                      {new Date(event.timestamp).toLocaleTimeString()}
-                    </span>
-                  )}
+          {specs.length === 0 ? (
+            <div style={styles.emptyText}>No active staging specs.</div>
+          ) : (
+            <div style={styles.specList}>
+              {specs.map(spec => (
+                <div key={`${spec.domain}-${spec.specId}`} style={styles.specItem}>
+                  <div style={styles.specInfo}>
+                    <div style={styles.specName}>{spec.specId}</div>
+                    <div style={styles.specMeta}>
+                      <span style={styles.domainTag}>{spec.domain.toUpperCase()}</span>
+                      <span style={styles.separator}>•</span>
+                      <span style={{ 
+                        color: getStateColor(spec.workflowState),
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                      }}>
+                        {spec.workflowState || 'UNKNOWN'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div style={styles.specActions}>
+                    {(spec.workflowState === 'DEFINING' || spec.workflowState === 'VETOED') && (
+                      <button style={styles.miniButton} onClick={(e) => { e.stopPropagation(); onAction('submit', spec.domain, spec.specId); }}>Submit</button>
+                    )}
+                    {spec.workflowState === 'READY_FOR_USER_APPROVAL' && (
+                      <button style={{...styles.miniButton, backgroundColor: '#F1C40F', color: '#000'}} onClick={(e) => { e.stopPropagation(); onAction('submit', spec.domain, spec.specId); }}>Confirm & Submit</button>
+                    )}
+                    {spec.workflowState === 'PENDING_REVIEW' && (
+                      <>
+                        <button style={{...styles.miniButton, backgroundColor: '#27AE60'}} onClick={(e) => { e.stopPropagation(); onAction('approve', spec.domain, spec.specId); }}>Approve</button>
+                        <button style={{...styles.miniButton, backgroundColor: '#E74C3C'}} onClick={(e) => { e.stopPropagation(); 
+                          const reason = prompt('Veto Reason:');
+                          if (reason) onAction('veto', spec.domain, spec.specId, { reason });
+                        }}>Veto</button>
+                      </>
+                    )}
+                    {spec.workflowState === 'MERGE_READY' && (
+                      <button style={{...styles.miniButton, backgroundColor: '#3498DB'}} onClick={(e) => { e.stopPropagation(); onAction('archive', spec.domain, spec.specId); }}>Ship It</button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
-
-          {/* 底部：操作按钮区 */}
-          <div style={styles.actions}>
-            <button
-              style={{
-                ...styles.button,
-                ...styles.buttonSubmit,
-              }}
-              onClick={() => handleAction('submit')}
-              disabled={currentEvent.workflowState === 'PENDING_REVIEW' || currentEvent.workflowState === 'DESIGNED'}
-            >
-              Submit for Review
-            </button>
-            <button
-              style={{
-                ...styles.button,
-                ...styles.buttonVeto,
-              }}
-              onClick={() => handleAction('veto')}
-            >
-              Veto
-            </button>
-            <button
-              style={{
-                ...styles.button,
-                ...styles.buttonResolve,
-              }}
-              onClick={() => handleAction('resolve')}
-              disabled={currentEvent.workflowState !== 'REJECTED' && currentEvent.workflowState !== 'FIXING'}
-            >
-              Resolve
-            </button>
-          </div>
         </div>
       )}
     </div>
   );
 };
 
-// 样式定义（梦幻紫色系）
 const styles: Record<string, React.CSSProperties> = {
   container: {
     backgroundColor: '#252526',
     border: '1px solid #3E3E42',
-    borderRadius: '4px',
+    borderRadius: '6px',
     marginBottom: '12px',
     overflow: 'hidden',
     fontFamily: 'var(--vscode-font-family)',
-    fontSize: '13px',
+    fontSize: '11px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
   },
   header: {
     display: 'flex',
@@ -299,120 +223,76 @@ const styles: Record<string, React.CSSProperties> = {
     userSelect: 'none',
     transition: 'background-color 0.2s',
   },
-  expandIcon: {
-    marginRight: '8px',
-    color: '#CCCCCC',
-    fontSize: '12px',
-  },
-  title: {
-    fontWeight: 'bold',
-    color: '#CCCCCC',
-    marginRight: '8px',
-  },
-  separator: {
-    color: '#666',
-    margin: '0 6px',
-  },
-  statusText: {
-    fontWeight: '500',
-    flex: 1,
-  },
-  fileName: {
-    color: '#CCCCCC',
-    fontSize: '12px',
-  },
-  state: {
+  expandIcon: { 
+    marginRight: '8px', 
     color: '#888',
-    fontSize: '11px',
+    fontSize: '14px',
+    display: 'inline-block',
   },
-  connectionStatus: {
-    fontSize: '11px',
+  title: { 
+    fontWeight: 'bold', 
+    color: '#AAA', 
+    marginRight: '8px',
+    letterSpacing: '0.5px',
+  },
+  countBadge: {
+    backgroundColor: '#3E3E42',
+    color: '#CCC',
+    padding: '1px 6px',
+    borderRadius: '10px',
+    fontSize: '9px',
     fontWeight: 'bold',
+  },
+  lastEvent: {
+    fontSize: '9px',
+    marginRight: '12px',
+    fontStyle: 'italic',
+    opacity: 0.8,
+  },
+  connectionStatus: { 
+    fontSize: '9px', 
+    fontWeight: 'bold',
+    opacity: 0.6,
   },
   content: {
-    padding: '12px',
-    borderTop: '1px solid #3E3E42',
+    padding: '10px',
+    backgroundColor: '#1E1E1E',
   },
-  overview: {
-    marginBottom: '12px',
+  emptyText: { color: '#666', textAlign: 'center', padding: '15px' },
+  specList: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  specItem: {
+    backgroundColor: '#2D2D30',
+    padding: '10px',
+    borderRadius: '4px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    border: '1px solid transparent',
+    transition: 'border-color 0.2s',
   },
-  overviewRow: {
+  specInfo: { flex: 1 },
+  specName: { 
+    fontWeight: 'bold', 
+    color: '#EEE', 
     marginBottom: '4px',
-  },
-  label: {
-    color: '#888',
-    marginRight: '8px',
-  },
-  timestamp: {
-    color: '#CCCCCC',
     fontSize: '12px',
   },
-  timeline: {
-    marginBottom: '12px',
-    backgroundColor: '#1E1E1E',
-    padding: '8px',
-    borderRadius: '4px',
-    maxHeight: '150px',
-    overflowY: 'auto',
-  },
-  timelineTitle: {
-    color: '#888',
-    fontSize: '11px',
-    marginBottom: '6px',
+  specMeta: { fontSize: '10px', color: '#888', display: 'flex', alignItems: 'center' },
+  domainTag: { 
+    color: '#8E44AD',
     fontWeight: 'bold',
   },
-  timelineItem: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '4px 0',
-    fontSize: '12px',
-    color: '#CCCCCC',
-  },
-  timelineIcon: {
-    marginRight: '6px',
-  },
-  timelineType: {
-    color: '#8E44AD',
-    fontWeight: '500',
-    marginRight: '4px',
-  },
-  timelineSeparator: {
-    color: '#666',
-    margin: '0 4px',
-  },
-  timelineTarget: {
-    flex: 1,
-    color: '#CCCCCC',
-  },
-  timelineTime: {
-    color: '#666',
-    fontSize: '10px',
-    marginLeft: '8px',
-  },
-  actions: {
-    display: 'flex',
-    gap: '8px',
-    justifyContent: 'flex-end',
-  },
-  button: {
-    padding: '6px 12px',
+  separator: { margin: '0 6px', opacity: 0.3 },
+  specActions: { display: 'flex', gap: '6px' },
+  miniButton: {
+    padding: '4px 10px',
     border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: '500',
-    transition: 'opacity 0.2s',
-  },
-  buttonSubmit: {
+    borderRadius: '3px',
     backgroundColor: '#8E44AD',
-    color: '#FFFFFF',
-  },
-  buttonVeto: {
-    backgroundColor: '#E74C3C',
-    color: '#FFFFFF',
-  },
-  buttonResolve: {
-    backgroundColor: '#27AE60',
-    color: '#FFFFFF',
-  },
+    color: 'white',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'filter 0.2s',
+  }
 };

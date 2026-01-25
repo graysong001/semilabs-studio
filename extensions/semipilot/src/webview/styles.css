@@ -59,10 +59,114 @@ body {
   }
 }
 
+:root {
+  --semipilot-purple: #8E44AD;
+  --semipilot-purple-light: #A569BD;
+  --semipilot-purple-dark: #7D3C98;
+  --semipilot-purple-glow: rgba(142, 68, 173, 0.3);
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: var(--vscode-sideBar-background);
+}
+
+/* Reasoning Deck (思维投影) 样式 */
+.reasoning-deck {
+  background: linear-gradient(135deg, #2D2D30 0%, #252526 100%);
+  border: 1px solid var(--semipilot-purple-light);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 12px var(--semipilot-purple-glow);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.reasoning-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
+}
+
+.reasoning-icon {
+  color: var(--semipilot-purple-light);
+  font-size: 14px;
+}
+
+.reasoning-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #DDD;
+  letter-spacing: 1px;
+}
+
+.reasoning-body {
+  font-size: 12px;
+  color: #BBB;
+  line-height: 1.5;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.reasoning-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.meta-chip {
+  background: rgba(142, 68, 173, 0.15);
+  border: 1px solid rgba(142, 68, 173, 0.3);
+  color: var(--semipilot-purple-light);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* 消息项美化 */
+.message {
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  background: var(--vscode-editor-background);
+  border-radius: 12px;
+  position: relative;
+  line-height: 1.6;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.message:hover {
+  border-color: rgba(142, 68, 173, 0.2);
+  transform: translateX(2px);
+}
+
+.assistant-message {
+  border-left: 3px solid var(--semipilot-purple);
+}
+
+.user-message {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background-color: var(--vscode-input-background);
+  border: 1px solid #3E3E42;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--semipilot-purple);
+  box-shadow: 0 0 15px var(--semipilot-purple-glow);
 }
 
 /* 顶部标题栏 */

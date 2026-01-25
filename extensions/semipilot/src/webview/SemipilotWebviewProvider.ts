@@ -115,6 +115,10 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
           // Slice 4: 处理 Workflow 操作（Submit / Veto / Resolve）
           this._handleWorkflowAction(data.action, data.target, data.params);
           break;
+        case 'refreshStagingList':
+          // V7 S3: 获取并刷新 Staging 列表
+          this._fetchStagingList();
+          break;
       }
     });
 
@@ -148,42 +152,33 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
 
   /**
    * 处理 Workflow 操作（Submit / Veto / Resolve）
-   * Slice 4: 调用后端 Workflow REST API
+   * V7 S3: 调用后端 Staging REST API
    */
-  private async _handleWorkflowAction(action: 'submit' | 'veto' | 'resolve', target: string, params?: any): Promise<void> {
-    console.log('[SemipilotWebviewProvider] Workflow action:', action, target, params);
+  private async _handleWorkflowAction(action: 'submit' | 'veto' | 'approve' | 'archive', domain: string, specId: string, params?: any): Promise<void> {
+    console.log('[SemipilotWebviewProvider] Staging action:', action, domain, specId, params);
     
     try {
       let endpoint: string;
-      let body: any;
+      let body: any = { domain, specId };
       
       switch (action) {
         case 'submit':
-          endpoint = 'workflow/submit';
-          body = { filePath: target };
+          endpoint = 'staging/submit'; // 后续需要确保后端有此端点
           break;
         case 'veto':
-          endpoint = 'workflow/veto';
-          body = {
-            filePath: target,
-            reason: params?.reason || '需要修改',
-            suggestion: params?.suggestion,
-          };
+          endpoint = 'staging/veto';
+          body.reason = params?.reason || 'Architecture constraint violated';
           break;
-        case 'resolve':
-          endpoint = 'workflow/resolve';
-          body = {
-            filePath: target,
-            userApproved: params?.userApproved !== false,
-          };
+        case 'approve':
+          endpoint = 'staging/approve';
+          break;
+        case 'archive':
+          endpoint = 'staging/archive';
           break;
         default:
-          throw new Error(`Unknown workflow action: ${action}`);
+          throw new Error(`Unknown staging action: ${action}`);
       }
       
-      // 调用后端 API（通过 SseMessenger）
-      // 注：这里需要在 SseMessenger 中新增对 Workflow REST API 的支持
-      // 暂时直接使用 fetch
       const baseUrl = process.env.SEMILABS_BACKEND_URL || 'http://localhost:8080/api/v1';
       const response = await fetch(`${baseUrl}/${endpoint}`, {
         method: 'POST',
@@ -197,36 +192,38 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const result = await response.json();
-      console.log('[SemipilotWebviewProvider] Workflow action result:', result);
-      
-      // 发送成功消息给 webview
-      this._view?.webview.postMessage({
-        type: 'assistantMessage',
-        message: {
-          id: Date.now().toString(),
-          content: `✅ Workflow 操作成功：**${action}**
-
-目标：\`${target.split(/[\/\\]/).pop()}\`
-状态：${result.data?.workflowState || '已更新'}`,
-          isUser: false,
-          timestamp: Date.now(),
-        },
-      });
+      // 操作成功后刷新列表
+      await this._fetchStagingList();
       
     } catch (error) {
-      console.error('[SemipilotWebviewProvider] Workflow action error:', error);
+      console.error('[SemipilotWebviewProvider] Staging action failed:', error);
+      vscode.window.showErrorMessage(`Staging action failed: ${error}`);
+    }
+  }
+
+  /**
+   * V7 S3: 从后端获取 Staging Spec 列表并推送给 Webview
+   */
+  private async _fetchStagingList(): Promise<void> {
+    if (!this._view) return;
+
+    try {
+      const baseUrl = process.env.SEMILABS_BACKEND_URL || 'http://localhost:8080/api/v1';
+      const response = await fetch(`${baseUrl}/staging/list`);
       
-      // 发送错误消息给 webview
-      this._view?.webview.postMessage({
-        type: 'assistantMessage',
-        message: {
-          id: Date.now().toString(),
-          content: `❌ Workflow 操作失败：${error instanceof Error ? error.message : String(error)}`,
-          isUser: false,
-          timestamp: Date.now(),
-        },
-      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        this._view.webview.postMessage({
+          type: 'stagingListUpdated',
+          specs: result.data
+        });
+      }
+    } catch (error) {
+      console.error('[SemipilotWebviewProvider] Failed to fetch staging list:', error);
     }
   }
 
