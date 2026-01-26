@@ -147,14 +147,14 @@ describe('Workflow SSE Integration Tests', function () {
         });
     });
     describe('多事件类型支持', function () {
-        const _eventTypes = [
-            'DRAFT_UPDATED',
-            'PROPOSAL_READY',
-            'REVIEW_SUBMITTED',
-            'VETO_APPLIED',
-            'FIX_SUBMITTED',
-            'WORKFLOW_APPROVED'
-        ];
+        /* const _eventTypes = [
+          'DRAFT_UPDATED',
+          'PROPOSAL_READY',
+          'REVIEW_SUBMITTED',
+          'VETO_APPLIED',
+          'FIX_SUBMITTED',
+          'WORKFLOW_APPROVED'
+        ]; */
         it('应该能监听所有 WorkflowEventType', function (done) {
             const receivedTypes = new Set();
             messenger.on('workflow/event', (message) => {

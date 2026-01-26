@@ -38,7 +38,8 @@ export class SpecContextProvider implements IContextProvider {
   private fileWatcher?: vscode.FileSystemWatcher;
   private isIndexed = false;
 
-  constructor(private readonly _workspaceRoot: string) {
+  constructor(workspaceRoot: string) {
+    void workspaceRoot; // Reserved for future use
     this.initializeIndex();
   }
 
@@ -365,6 +366,7 @@ export class SpecContextProvider implements IContextProvider {
     }
   }
 
+  /* Reserved for future use
   private _formatDescription(metadata?: SpecMetadata): string {
     if (!metadata) return '';
     const parts: string[] = [];
@@ -373,6 +375,7 @@ export class SpecContextProvider implements IContextProvider {
     if (metadata.status) parts.push(metadata.status);
     return parts.join(' • ');
   }
+  */
 
   private getSpecIcon(status?: string): string {
     switch (status) {

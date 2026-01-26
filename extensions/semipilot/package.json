@@ -61,6 +61,8 @@
     "test:unit": "npx jest"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/eventsource": "^1.1.15",
     "@types/glob": "^8.1.0",
     "@types/jest": "^30.0.0",

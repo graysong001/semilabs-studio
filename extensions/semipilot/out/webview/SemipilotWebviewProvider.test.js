@@ -44,9 +44,10 @@ exports.SemipilotWebviewProviderTest = void 0;
 const vscode = __importStar(require("vscode"));
 class SemipilotWebviewProviderTest {
     // private _view?: vscode.WebviewView;
-    constructor(_extensionUri, __extensionContext) {
+    constructor(_extensionUri, _extensionContext // Reserved, not used yet
+    ) {
         this._extensionUri = _extensionUri;
-        this.__extensionContext = __extensionContext;
+        void _extensionContext;
     }
     resolveWebviewView(webviewView, _context, _token) {
         console.log('[TEST] resolveWebviewView called');

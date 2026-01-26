@@ -200,7 +200,7 @@ const App = () => {
                         setMessages(prev => [...prev, resultMsg]);
                         // 如果有任务数据，添加点击事件监听
                         if (message.tasks && message.tasks.length > 0) {
-                            const timeoutId = setTimeout(() => {
+                            setTimeout(() => {
                                 document.querySelectorAll('a[data-task-path]').forEach(link => {
                                     const handleClick = (e) => {
                                         e.preventDefault();
@@ -216,11 +216,8 @@ const App = () => {
                                         }
                                     };
                                     link.addEventListener('click', handleClick);
-                                    // 清理函数会在组件卸载时自动调用
                                 });
                             }, 100); // 等待DOM渲染
-                            // 清理超时
-                            return () => clearTimeout(timeoutId);
                         }
                     }
                     break;

@@ -36,10 +36,11 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly __extensionContext: vscode.ExtensionContext,
+    _extensionContext: vscode.ExtensionContext, // Reserved, not used yet
     private readonly _messenger: SseMessenger, // Backend通信
     private readonly _contextManager?: ContextProviderManager // 可选，因为可能没有工作区
   ) {
+    void _extensionContext;
     // 初始化TaskContextProvider
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (workspaceRoot) {

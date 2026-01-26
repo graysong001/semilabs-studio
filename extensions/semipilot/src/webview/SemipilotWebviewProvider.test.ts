@@ -15,8 +15,10 @@ export class SemipilotWebviewProviderTest implements vscode.WebviewViewProvider 
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly __extensionContext: vscode.ExtensionContext
-  ) {}
+    _extensionContext: vscode.ExtensionContext // Reserved, not used yet
+  ) {
+    void _extensionContext;
+  }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,

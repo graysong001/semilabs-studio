@@ -72,16 +72,16 @@ suite('Task List UI - E2E Tests', () => {
             assert.ok(workspaceFolders && workspaceFolders.length > 0, 'Workspace should be open');
             // 创建测试任务文件
             const testTaskPath = path.join(workspaceFolders[0].uri.fsPath, '_projects', 'test-project', 'spec-task-test-001.md');
-            const _testTaskContent = `---
-task_id: task-test-001
-status: PENDING
-priority: HIGH
-domain: test-domain
----
-
-# Test Task
-This is a test task for E2E testing.
-`;
+            /* const _testTaskContent = `---
+      task_id: task-test-001
+      status: PENDING
+      priority: HIGH
+      domain: test-domain
+      ---
+      
+      # Test Task
+      This is a test task for E2E testing.
+      `; */
             // When: 调用打开任务文档命令
             try {
                 await vscode.commands.executeCommand('semilabs.openTaskDocument', testTaskPath);

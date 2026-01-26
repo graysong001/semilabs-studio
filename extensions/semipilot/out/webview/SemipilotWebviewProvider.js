@@ -57,13 +57,14 @@ class SemipilotWebviewProvider {
             filePath,
         });
     }
-    constructor(_extensionUri, __extensionContext, _messenger, // Backend通信
+    constructor(_extensionUri, _extensionContext, // Reserved, not used yet
+    _messenger, // Backend通信
     _contextManager // 可选，因为可能没有工作区
     ) {
         this._extensionUri = _extensionUri;
-        this.__extensionContext = __extensionContext;
         this._messenger = _messenger;
         this._contextManager = _contextManager;
+        void _extensionContext;
         // 初始化TaskContextProvider
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (workspaceRoot) {

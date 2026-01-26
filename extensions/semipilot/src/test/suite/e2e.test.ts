@@ -52,7 +52,7 @@ suite('Task List UI - E2E Tests', () => {
         'spec-task-test-001.md'
       );
       
-      const _testTaskContent = `---
+      /* const _testTaskContent = `---
 task_id: task-test-001
 status: PENDING
 priority: HIGH
@@ -61,7 +61,7 @@ domain: test-domain
 
 # Test Task
 This is a test task for E2E testing.
-`;
+`; */
       
       // When: 调用打开任务文档命令
       try {

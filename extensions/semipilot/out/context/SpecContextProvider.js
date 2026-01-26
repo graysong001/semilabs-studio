@@ -52,14 +52,14 @@ const path = __importStar(require("path"));
 // 文件大小限制：5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 class SpecContextProvider {
-    constructor(_workspaceRoot) {
-        this._workspaceRoot = _workspaceRoot;
+    constructor(workspaceRoot) {
         this.id = 'spec';
         this.title = 'spec';
         this.displayTitle = 'Spec Documents';
         this.description = 'Reference specification documents (cap-*.md, spec-*.md, intent_*.md)';
         this.specIndex = new Map();
         this.isIndexed = false;
+        void workspaceRoot; // Reserved for future use
         this.initializeIndex();
     }
     async search(query) {
@@ -355,18 +355,16 @@ class SpecContextProvider {
             });
         }
     }
-    _formatDescription(metadata) {
-        if (!metadata)
-            return '';
-        const parts = [];
-        if (metadata.domain)
-            parts.push(`Domain: ${metadata.domain}`);
-        if (metadata.version)
-            parts.push(`v${metadata.version}`);
-        if (metadata.status)
-            parts.push(metadata.status);
-        return parts.join(' • ');
+    /* Reserved for future use
+    private _formatDescription(metadata?: SpecMetadata): string {
+      if (!metadata) return '';
+      const parts: string[] = [];
+      if (metadata.domain) parts.push(`Domain: ${metadata.domain}`);
+      if (metadata.version) parts.push(`v${metadata.version}`);
+      if (metadata.status) parts.push(metadata.status);
+      return parts.join(' • ');
     }
+    */
     getSpecIcon(status) {
         switch (status) {
             case 'APPROVED':
