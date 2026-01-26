@@ -54,8 +54,9 @@
     "test:workflow": "npm run compile && npx mocha out/test/workflow-integration.test.js --timeout 60000",
     "test:workflow-e2e": "npm run compile && npx mocha out/test/workflow-e2e.test.js --timeout 60000",
     "test:auto": "node test/automated/full-coverage-test.js",
+    "test:e2e": "node test/e2e-full-stack.test.js",
     "test:slash": "node verify-slash.js",
-    "test:all": "npm run compile && npm run test:auto && npm run test:slash && npm run test:workflow",
+    "test:all": "npm run compile && npm run test:auto && npm run test:e2e && npm run test:slash && npm run test:workflow",
     "test:staging": "npx jest --testMatch='**/Staging*.test.ts' --testMatch='**/Workflow*.test.ts'",
     "test:coverage": "npx jest --coverage",
     "test:unit": "npx jest"
