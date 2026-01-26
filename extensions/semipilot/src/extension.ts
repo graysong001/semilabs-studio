@@ -9,10 +9,13 @@ import { SseMessenger } from './messenger/SseMessenger';
 import { SemipilotWebviewProvider } from './webview/SemipilotWebviewProvider';
 import { ContextProviderManager } from './context/ContextProviderManager';
 import { registerTaskCommands } from './commands/taskCommands';
+import { AssumptionDiagnosticProvider } from './diagnostics/AssumptionDiagnosticProvider';
+import { AssumptionCodeActionProvider } from './codeactions/AssumptionCodeActionProvider';
 
 let messenger: SseMessenger;
 let contextManager: ContextProviderManager;
 let webviewProvider: SemipilotWebviewProvider;
+let assumptionDiagnosticProvider: AssumptionDiagnosticProvider;
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('[Semipilot] Activating extension...');
@@ -45,6 +48,33 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(`Semipilot Error: ${error.message}`);
   });
   
+  // POE v11.2: 注册 spec/updated 事件监听（Flash Translation 异步写入完成通知）
+  messenger.on('spec/updated', (event) => {
+    const { nfrCount, domain, specId } = event.data;
+    console.log(`[Semipilot] Spec updated: ${domain}/${specId}, ${nfrCount} NFRs added`);
+    
+    // 显示 Toast 通知
+    vscode.window.showInformationMessage(
+      `Spec 已更新: ${domain}/${specId} (新增 ${nfrCount} 条 NFR)`,
+      '查看 Spec'
+    ).then((selection) => {
+      if (selection === '查看 Spec') {
+        // 尝试打开 Spec 文件
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (workspaceRoot) {
+          const specPath = `${workspaceRoot}/_specs/${domain}/${specId}.md`;
+          vscode.workspace.openTextDocument(specPath)
+            .then((doc) => {
+              vscode.window.showTextDocument(doc);
+            }, (error: any) => {
+              console.error('[Semipilot] Failed to open spec:', error);
+              vscode.window.showWarningMessage(`无法打开 Spec 文件: ${specPath}`);
+            });
+        }
+      }
+    });
+  });
+  
   const webviewProviderInstance = new SemipilotWebviewProvider(
     context.extensionUri,
     context,
@@ -62,6 +92,46 @@ export function activate(context: vscode.ExtensionContext) {
   
   // Register task commands
   registerTaskCommands(context);
+  
+  // Poe v11.2: 注册 Assumption Diagnostic Provider (Ghost Mode)
+  assumptionDiagnosticProvider = new AssumptionDiagnosticProvider();
+  context.subscriptions.push(assumptionDiagnosticProvider);
+  
+  // 监听文档打开/编辑事件
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((document) => {
+      assumptionDiagnosticProvider.updateDiagnostics(document);
+    })
+  );
+  
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      assumptionDiagnosticProvider.updateDiagnostics(event.document);
+    })
+  );
+  
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      assumptionDiagnosticProvider.clearDiagnostics(document.uri);
+    })
+  );
+  
+  // 扫描已打开的所有文档
+  vscode.workspace.textDocuments.forEach((document) => {
+    assumptionDiagnosticProvider.updateDiagnostics(document);
+  });
+  
+  // Poe v11.2: 注册 Assumption Code Action Provider (Quick Fix)
+  const codeActionProvider = new AssumptionCodeActionProvider();
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: 'markdown', scheme: 'file' },
+      codeActionProvider,
+      {
+        providedCodeActionKinds: AssumptionCodeActionProvider.providedCodeActionKinds
+      }
+    )
+  );
   
   // Register command: Open Chat
   const openChatCommand = vscode.commands.registerCommand('semipilot.openChat', async () => {
@@ -126,6 +196,12 @@ export function deactivate() {
     // Clean up webview provider
     if (webviewProvider) {
       webviewProvider = undefined as any;
+    }
+    
+    // Clean up assumption diagnostic provider
+    if (assumptionDiagnosticProvider) {
+      assumptionDiagnosticProvider.dispose();
+      assumptionDiagnosticProvider = undefined as any;
     }
     
     console.log('[Semipilot] Extension deactivated successfully');

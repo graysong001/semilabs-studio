@@ -223,6 +223,16 @@ export interface FromExtensionProtocol extends IProtocol {
 }
 
 /**
+ * Spec Updated Event (POE v11.2 - Flash Translation)
+ */
+export interface SpecUpdatedEvent {
+  nfrCount: number;
+  domain: string;
+  specId: string;
+  timestamp: number;
+}
+
+/**
  * Backend -> Extension Protocol (ToExtensionProtocol)
  */
 export interface ToExtensionProtocol extends IProtocol {
@@ -233,6 +243,9 @@ export interface ToExtensionProtocol extends IProtocol {
   
   // Workflow Events (Slice 4 - 独立 SSE 通道)
   'workflow/event': [WorkflowEvent, void];
+  
+  // Spec Events (POE v11.2)
+  'spec/updated': [SpecUpdatedEvent, void];
   
   // Notifications
   'notification/show': [{ type: 'info' | 'warning' | 'error'; message: string }, void];

@@ -193,6 +193,16 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       }
     });
     
+    // POE v11.2: Spec updated event (Flash Translation 异步写入完成通知)
+    eventSource.addEventListener('spec_updated', (event: any) => {
+      try {
+        const data = JSON.parse(event.data);
+        this.invoke('spec/updated', data);
+      } catch (error) {
+        console.error('[SseMessenger] Failed to parse spec_updated event:', error, 'Raw data:', event.data);
+      }
+    });
+    
     eventSource.addEventListener('notification/show', (event: any) => {
       try {
         const data = JSON.parse(event.data);

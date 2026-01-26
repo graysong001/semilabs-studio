@@ -50,6 +50,197 @@ body {
   }
 }
 
+/* ===== Poe v11.2: CAPTURED Card Styles ===== */
+.captured-card {
+  margin-top: 8px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background-color: var(--vscode-editor-background);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.captured-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgba(142, 68, 173, 0.05) 0%, transparent 100%);
+  transition: background-color 0.2s ease;
+}
+
+.captured-card-header:hover {
+  background: linear-gradient(90deg, rgba(142, 68, 173, 0.1) 0%, transparent 100%);
+}
+
+.captured-card-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.captured-icon {
+  font-size: 16px;
+}
+
+.captured-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+}
+
+.captured-stats {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.stat-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.stat-badge.stat-success {
+  background-color: rgba(46, 160, 67, 0.15);
+  color: #2ea043;
+}
+
+.stat-badge.stat-warning {
+  background-color: rgba(212, 167, 44, 0.15);
+  color: #d4a72c;
+}
+
+.stat-badge.stat-info {
+  background-color: rgba(100, 149, 237, 0.15);
+  color: #6495ed;
+}
+
+.expand-icon {
+  font-size: 10px;
+  color: var(--vscode-foreground);
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.captured-card-body {
+  padding: 8px;
+  border-top: 1px solid var(--vscode-panel-border);
+  animation: fadeIn 0.2s ease;
+}
+
+.captured-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.captured-item:last-child {
+  margin-bottom: 0;
+}
+
+.captured-item.item-success {
+  background-color: rgba(46, 160, 67, 0.08);
+  border-left: 3px solid #2ea043;
+}
+
+.captured-item.item-warning {
+  background-color: rgba(212, 167, 44, 0.08);
+  border-left: 3px solid #d4a72c;
+}
+
+.captured-item.item-info {
+  background-color: rgba(100, 149, 237, 0.08);
+  border-left: 3px solid #6495ed;
+}
+
+.captured-item:hover {
+  background-color: rgba(142, 68, 173, 0.1);
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.item-icon {
+  font-size: 14px;
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-tech {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+}
+
+.item-intent {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  display: inline;
+}
+
+.item-confidence {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.8;
+  display: inline;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+}
+
+.item-action-label {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background-color: rgba(46, 160, 67, 0.15);
+  color: #2ea043;
+  font-weight: 500;
+}
+
+.item-action-label.context-only {
+  background-color: rgba(100, 149, 237, 0.15);
+  color: #6495ed;
+}
+
+.item-confirm-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-button-border);
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.item-confirm-btn:hover {
+  background-color: var(--vscode-button-hoverBackground);
+  transform: translateY(-1px);
+}
+
+.item-confirm-btn:active {
+  transform: translateY(0);
+}
+/* ===== End CAPTURED Card Styles ===== */
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

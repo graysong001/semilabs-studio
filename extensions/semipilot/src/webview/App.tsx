@@ -14,6 +14,8 @@ import { WorkflowCard } from './WorkflowCard';
 import { ReasoningDeck } from './ReasoningDeck';
 import { IntentProposalCard } from './IntentProposalCard';
 import { TribunalCard } from './TribunalCard';
+import { parseMarkdownSidecar, SidecarMetadata } from './MarkdownSidecarParser';
+import { CapturedCard } from './CapturedCard';
 
 interface Message {
   id: string;
@@ -23,6 +25,7 @@ interface Message {
   contextItems?: ContextItem[]; // 添加上下文项
   type?: 'message' | 'proposalCard' | 'tribunalCard'; // 消息类型
   metadata?: any; // 附加元数据（用于卡片）
+  sidecar?: SidecarMetadata; // Poe v11.2: Flash Translation Sidecar
 }
 
 interface ContextItem {
@@ -127,13 +130,22 @@ export const App: React.FC = () => {
           // 处理Agent回复
           setIsWaiting(false); // 收到回复，停止加载动画
           if (message.message) {
+            // Poe v11.2: 解析 Sidecar Markdown Code Block
+            const parsed = parseMarkdownSidecar(message.message.content);
+            
             const assistantMsg: Message = {
               id: message.message.id || Date.now().toString(),
-              content: message.message.content,
+              content: parsed.cleanContent, // 使用移除Sidecar后的内容
               isUser: false,
-              timestamp: message.message.timestamp || Date.now()
+              timestamp: message.message.timestamp || Date.now(),
+              sidecar: parsed.sidecar, // 附加Sidecar元数据
             };
             setMessages(prev => [...prev, assistantMsg]);
+            
+            // Debug: 输出Sidecar信息
+            if (parsed.hasSidecar) {
+              console.log('[App] Sidecar detected:', parsed.sidecar);
+            }
           }
           break;
         case 'workflowEvent':
@@ -570,7 +582,7 @@ export const App: React.FC = () => {
                       )}
                     </>
                   ) : (
-                    // AI 回复：结构化推理投影 + Markdown 渲染
+                    // AI 回复：结构化推理投影 + Markdown 渲染 + CAPTURED Card
                     <>
                       <ReasoningDeck content={msg.content} />
                       <ReactMarkdown
@@ -596,6 +608,22 @@ export const App: React.FC = () => {
                       >
                         {msg.content}
                       </ReactMarkdown>
+                      {/* Poe v11.2: CAPTURED Card */}
+                      {msg.sidecar?.captured && msg.sidecar.captured.length > 0 && (
+                        <CapturedCard 
+                          items={msg.sidecar.captured}
+                          onConfirm={(item) => {
+                            console.log('[App] User confirmed CAPTURED item:', item);
+                            // TODO: 发送确认事件到Backend
+                            if (vscodeRef.current) {
+                              vscodeRef.current.postMessage({
+                                type: 'confirmCaptured',
+                                item,
+                              });
+                            }
+                          }}
+                        />
+                      )}
                     </>
                   )}
                 </div>

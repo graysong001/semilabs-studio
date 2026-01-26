@@ -52,6 +52,8 @@ const WorkflowCard_1 = require("./WorkflowCard");
 const ReasoningDeck_1 = require("./ReasoningDeck");
 const IntentProposalCard_1 = require("./IntentProposalCard");
 const TribunalCard_1 = require("./TribunalCard");
+const MarkdownSidecarParser_1 = require("./MarkdownSidecarParser");
+const CapturedCard_1 = require("./CapturedCard");
 const App = () => {
     const [messages, setMessages] = (0, react_1.useState)([]);
     const [agent, setAgent] = (0, react_1.useState)('poe');
@@ -132,13 +134,20 @@ const App = () => {
                     // 处理Agent回复
                     setIsWaiting(false); // 收到回复，停止加载动画
                     if (message.message) {
+                        // Poe v11.2: 解析 Sidecar Markdown Code Block
+                        const parsed = (0, MarkdownSidecarParser_1.parseMarkdownSidecar)(message.message.content);
                         const assistantMsg = {
                             id: message.message.id || Date.now().toString(),
-                            content: message.message.content,
+                            content: parsed.cleanContent, // 使用移除Sidecar后的内容
                             isUser: false,
-                            timestamp: message.message.timestamp || Date.now()
+                            timestamp: message.message.timestamp || Date.now(),
+                            sidecar: parsed.sidecar, // 附加Sidecar元数据
                         };
                         setMessages(prev => [...prev, assistantMsg]);
+                        // Debug: 输出Sidecar信息
+                        if (parsed.hasSidecar) {
+                            console.log('[App] Sidecar detected:', parsed.sidecar);
+                        }
                     }
                     break;
                 case 'workflowEvent':
@@ -504,7 +513,7 @@ const App = () => {
                         item.type === 'spec' ? '📄' : '📁',
                         " ",
                         item.label))))))) : (
-                // AI 回复：结构化推理投影 + Markdown 渲染
+                // AI 回复：结构化推理投影 + Markdown 渲染 + CAPTURED Card
                 react_1.default.createElement(react_1.default.Fragment, null,
                     react_1.default.createElement(ReasoningDeck_1.ReasoningDeck, { content: msg.content }),
                     react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default], rehypePlugins: [rehype_highlight_1.default], components: {
@@ -514,7 +523,17 @@ const App = () => {
                                 return !inline && match ? (react_1.default.createElement("pre", { className: `language-${match[1]}` },
                                     react_1.default.createElement("code", { className: className, ...rest }, children))) : (react_1.default.createElement("code", { className: className, ...rest }, children));
                             },
-                        } }, msg.content)))),
+                        } }, msg.content),
+                    msg.sidecar?.captured && msg.sidecar.captured.length > 0 && (react_1.default.createElement(CapturedCard_1.CapturedCard, { items: msg.sidecar.captured, onConfirm: (item) => {
+                            console.log('[App] User confirmed CAPTURED item:', item);
+                            // TODO: 发送确认事件到Backend
+                            if (vscodeRef.current) {
+                                vscodeRef.current.postMessage({
+                                    type: 'confirmCaptured',
+                                    item,
+                                });
+                            }
+                        } }))))),
                 react_1.default.createElement("div", { className: "message-actions" },
                     react_1.default.createElement("button", { className: "message-copy-btn", onClick: () => copyMessage(msg.content), title: "Copy message" }, "\uD83D\uDCCB"))))),
             isWaiting && (react_1.default.createElement("div", { className: "message loading-message" },
