@@ -85,7 +85,7 @@ const WorkflowCard = ({ onAction }) => {
             default: return '#888';
         }
     };
-    const getFileName = (path) => path.split(/[/\\]/).pop() || path;
+    // const getFileName = (path: string) => path.split(/[/\\]/).pop() || path;
     const canArchiveAll = specs.length > 0 && specs.every(s => s.workflowState === 'MERGE_READY');
     const handleArchiveAll = (e) => {
         e.stopPropagation();

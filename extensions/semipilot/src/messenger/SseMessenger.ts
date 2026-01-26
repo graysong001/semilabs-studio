@@ -4,16 +4,17 @@
  * Implements IMessenger over HTTP + Server-Sent Events
  */
 
-import { IMessenger, Message, InProcessMessenger } from './IMessenger';
+import { InProcessMessenger } from './IMessenger';
 import type { FromExtensionProtocol, ToExtensionProtocol } from './SemilabsProtocol';
 
-// EventSource polyfill for Node.js
-const { EventSource } = require('eventsource');
+// EventSource polyfill for Node.js (using require for compatibility)
+const EventSourceImpl = require('eventsource');
 
 export interface SseMessengerConfig {
   baseUrl: string;
   authToken?: string;
   reconnectInterval?: number;
+  maxReconnectAttempts?: number; // 最大重连次数
   autoConnect?: boolean; // 是否自动连接，默认 false
 }
 
@@ -24,11 +25,14 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
   private baseUrl: string;
   private authToken?: string;
   private reconnectInterval: number;
+  private maxReconnectAttempts: number;
   private autoConnect: boolean;
-  private eventSource?: EventSource; // 主 SSE 连接 (/sse/events)
-  private workflowEventSource?: EventSource; // Workflow SSE 连接 (/api/v1/workflow/events)
+  private eventSource?: any; // 主 SSE 连接 (/sse/events)
+  private workflowEventSource?: any; // Workflow SSE 连接 (/api/v1/workflow/events)
   private isConnected = false; // 连接状态
   private isWorkflowConnected = false; // Workflow SSE 连接状态
+  private reconnectAttempts = 0; // 当前重连尝试次数
+  private workflowReconnectAttempts = 0; // Workflow SSE 重连尝试次数
 
   constructor(config: SseMessengerConfig) {
     super();
@@ -36,6 +40,7 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     this.baseUrl = config.baseUrl.replace(/\/$/, '');
     this.authToken = config.authToken;
     this.reconnectInterval = config.reconnectInterval ?? 5000;
+    this.maxReconnectAttempts = config.maxReconnectAttempts ?? 10;
     this.autoConnect = config.autoConnect ?? false; // 默认不自动连接
     
     // 只有当 autoConnect = true 时才自动连接
@@ -76,14 +81,14 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     // 防止重复连接，先关闭旧连接
     if (this.eventSource) {
       console.warn('[SseMessenger] Closing existing SSE connection before creating new one');
-      this.eventSource.close();
+      this.cleanupEventSource(this.eventSource);
       this.eventSource = undefined;
     }
     
     const sseUrl = `${this.baseUrl}/sse/events`;
-    console.log(`[SseMessenger] Connecting to ${sseUrl}`);
+    console.log(`[SseMessenger] Connecting to ${sseUrl} (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
     
-    const eventSource = new EventSource(sseUrl);
+    const eventSource = new EventSourceImpl(sseUrl);
     this.eventSource = eventSource;
     
     eventSource.onopen = () => {
@@ -94,6 +99,7 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       }
       console.log('[SseMessenger] SSE connection established');
       this.isConnected = true;
+      this.reconnectAttempts = 0; // 重置重连计数
     };
     
     eventSource.onerror = (error: any) => {
@@ -113,11 +119,20 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       this.eventSource = undefined;
       
       // 只有在 autoConnect 模式下才自动重连
-      if (this.autoConnect) {
+      if (this.autoConnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        // 指数退避：2^n * reconnectInterval，最大30秒
+        const delay = Math.min(
+          Math.pow(2, this.reconnectAttempts - 1) * this.reconnectInterval,
+          30000
+        );
+        console.log(`[SseMessenger] Auto-reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
         setTimeout(() => {
-          console.log('[SseMessenger] Auto-reconnecting...');
           this.connectSSE();
-        }, this.reconnectInterval);
+        }, delay);
+      } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.error('[SseMessenger] Max reconnection attempts reached. Connection failed permanently.');
+        this.reconnectAttempts = 0;
       } else {
         console.log('[SseMessenger] Connection lost. Call connect() to reconnect manually.');
       }
@@ -125,6 +140,25 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     
     // 设置事件监听器
     this.setupSSEEventListeners(eventSource);
+  }
+  
+  /**
+   * 清理 EventSource 资源
+   */
+  private cleanupEventSource(eventSource: any): void {
+    if (!eventSource) return;
+    
+    try {
+      eventSource.onopen = null;
+      eventSource.onerror = null;
+      eventSource.onmessage = null;
+      // 移除所有自定义事件监听器
+      if (eventSource.close && typeof eventSource.close === 'function') {
+        eventSource.close();
+      }
+    } catch (error) {
+      console.error('[SseMessenger] Error cleaning up EventSource:', error);
+    }
   }
 
   /**
@@ -177,14 +211,14 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
     // 防止重复连接，先关闭旧连接
     if (this.workflowEventSource) {
       console.warn('[SseMessenger] Closing existing Workflow SSE connection before creating new one');
-      this.workflowEventSource.close();
+      this.cleanupEventSource(this.workflowEventSource);
       this.workflowEventSource = undefined;
     }
     
     const workflowSseUrl = `${this.baseUrl}/workflow/events`;
-    console.log(`[SseMessenger] Connecting to Workflow SSE: ${workflowSseUrl}`);
+    console.log(`[SseMessenger] Connecting to Workflow SSE: ${workflowSseUrl} (attempt ${this.workflowReconnectAttempts + 1}/${this.maxReconnectAttempts})`);
     
-    const eventSource = new EventSource(workflowSseUrl);
+    const eventSource = new EventSourceImpl(workflowSseUrl);
     this.workflowEventSource = eventSource;
     
     eventSource.onopen = () => {
@@ -195,6 +229,7 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       }
       console.log('[SseMessenger] Workflow SSE connection established');
       this.isWorkflowConnected = true;
+      this.workflowReconnectAttempts = 0; // 重置重连计数
     };
     
     eventSource.onerror = (error: any) => {
@@ -214,11 +249,20 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
       this.workflowEventSource = undefined;
       
       // 只有在 autoConnect 模式下才自动重连
-      if (this.autoConnect) {
+      if (this.autoConnect && this.workflowReconnectAttempts < this.maxReconnectAttempts) {
+        this.workflowReconnectAttempts++;
+        // 指数退避：2^n * reconnectInterval，最大30秒
+        const delay = Math.min(
+          Math.pow(2, this.workflowReconnectAttempts - 1) * this.reconnectInterval,
+          30000
+        );
+        console.log(`[SseMessenger] Auto-reconnecting Workflow SSE in ${delay}ms (attempt ${this.workflowReconnectAttempts}/${this.maxReconnectAttempts})...`);
         setTimeout(() => {
-          console.log('[SseMessenger] Auto-reconnecting Workflow SSE...');
           this.connectWorkflowSSE();
-        }, this.reconnectInterval);
+        }, delay);
+      } else if (this.workflowReconnectAttempts >= this.maxReconnectAttempts) {
+        console.error('[SseMessenger] Max Workflow reconnection attempts reached. Connection failed permanently.');
+        this.workflowReconnectAttempts = 0;
       } else {
         console.log('[SseMessenger] Workflow SSE connection lost. Call connectWorkflow() to reconnect manually.');
       }
@@ -392,23 +436,21 @@ export class SseMessenger extends InProcessMessenger<ToExtensionProtocol, FromEx
   disconnect() {
     // 主 SSE 连接清理
     if (this.eventSource) {
-      this.eventSource.onopen = null;
-      this.eventSource.onerror = null;
-      this.eventSource.close();
+      this.cleanupEventSource(this.eventSource);
       this.eventSource = undefined;
     }
     this.isConnected = false;
+    this.reconnectAttempts = 0;
     
     // Workflow SSE 连接清理
     if (this.workflowEventSource) {
-      this.workflowEventSource.onopen = null;
-      this.workflowEventSource.onerror = null;
-      this.workflowEventSource.close();
+      this.cleanupEventSource(this.workflowEventSource);
       this.workflowEventSource = undefined;
     }
     this.isWorkflowConnected = false;
+    this.workflowReconnectAttempts = 0;
     
-    console.log('[SseMessenger] Disconnected');
+    console.log('[SseMessenger] Disconnected and cleaned up all resources');
   }
 
   /**

@@ -6,7 +6,7 @@
  * 管理所有 Context Providers 的注册、查询和生命周期
  */
 
-import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 import { IContextProvider, ContextItem, ContextProviderDescription } from './IContextProvider';
 import { FileContextProvider } from './FileContextProvider';
 import { SpecContextProvider } from './SpecContextProvider';

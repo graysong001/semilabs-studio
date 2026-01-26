@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskContextProvider = exports.Priority = exports.TaskStatus = void 0;
 const vscode = __importStar(require("vscode"));
+// import * as path from 'path';
 // 任务状态
 var TaskStatus;
 (function (TaskStatus) {
@@ -65,26 +66,43 @@ class TaskContextProvider {
      */
     async scanTasks() {
         console.log('[TaskContextProvider] Scanning tasks...');
-        const pattern = new vscode.RelativePattern(this.workspaceRoot, '**/spec-task-*.md');
-        const files = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
-        console.log(`[TaskContextProvider] Found ${files.length} task files`);
-        const tasks = [];
-        for (const uri of files) {
-            try {
-                const task = await this.parseTaskFile(uri);
-                if (task) {
-                    tasks.push(task);
+        try {
+            const pattern = new vscode.RelativePattern(this.workspaceRoot, '**/spec-task-*.md');
+            const files = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
+            console.log(`[TaskContextProvider] Found ${files.length} task files`);
+            const tasks = [];
+            const parseErrors = [];
+            for (const uri of files) {
+                try {
+                    const task = await this.parseTaskFile(uri);
+                    if (task) {
+                        tasks.push(task);
+                    }
+                    else {
+                        console.warn(`[TaskContextProvider] Skipping invalid task file: ${uri.fsPath}`);
+                    }
+                }
+                catch (error) {
+                    console.error(`[TaskContextProvider] Failed to parse ${uri.fsPath}:`, error);
+                    parseErrors.push({ file: uri.fsPath, error });
                 }
             }
-            catch (error) {
-                console.warn(`[TaskContextProvider] Failed to parse ${uri.fsPath}:`, error);
+            // 报告解析错误统计
+            if (parseErrors.length > 0) {
+                console.warn(`[TaskContextProvider] Failed to parse ${parseErrors.length}/${files.length} task files`);
             }
+            // 计算阻塞关系
+            this.calculateBlockedTasks(tasks);
+            // 计算排序分数
+            this.calculateScores(tasks);
+            console.log(`[TaskContextProvider] Successfully parsed ${tasks.length} tasks`);
+            return tasks;
         }
-        // 计算阻塞关系
-        this.calculateBlockedTasks(tasks);
-        // 计算排序分数
-        this.calculateScores(tasks);
-        return tasks;
+        catch (error) {
+            console.error('[TaskContextProvider] Fatal error during task scanning:', error);
+            // 返回空数组而不是抛出异常，保证扩展继续运行
+            return [];
+        }
     }
     /**
      * 解析单个任务文件

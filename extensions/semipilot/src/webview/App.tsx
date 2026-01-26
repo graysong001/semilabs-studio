@@ -114,7 +114,7 @@ export const App: React.FC = () => {
     });
     
     // 监听来自 Extension Host 的消息
-    const messageHandler = (event: MessageEvent) => {
+    const messageHandler = (event: MessageEvent): void => {
       const message = event.data;
       
       switch (message.type) {
@@ -196,20 +196,31 @@ export const App: React.FC = () => {
             
             // 如果有任务数据，添加点击事件监听
             if (message.tasks && message.tasks.length > 0) {
-              setTimeout(() => {
+              const timeoutId = setTimeout(() => {
                 document.querySelectorAll('a[data-task-path]').forEach(link => {
-                  link.addEventListener('click', (e) => {
+                  const handleClick = (e: Event) => {
                     e.preventDefault();
-                    const filePath = (e.target as HTMLElement).getAttribute('data-task-path');
+                    const target = e.target as HTMLElement;
+                    if (!target) return;
+                    
+                    const filePath = target.getAttribute('data-task-path');
                     if (filePath && vscodeRef.current) {
                       vscodeRef.current.postMessage({
                         type: 'openTask',
                         filePath
                       });
                     }
-                  });
+                  };
+                  
+                  link.addEventListener('click', handleClick);
+                  // 清理函数会在组件卸载时自动调用
                 });
               }, 100);  // 等待DOM渲染
+              
+              // 清理超时
+              return () => {
+                clearTimeout(timeoutId);
+              };
             }
           }
           break;
@@ -352,8 +363,27 @@ export const App: React.FC = () => {
     }
   };
 
-  const copyMessage = (content: string) => {
-    navigator.clipboard.writeText(content);
+  const copyMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      console.log('[App] Message copied to clipboard');
+    } catch (error) {
+      console.error('[App] Failed to copy message:', error);
+      // Fallback: 使用传统方法
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        console.log('[App] Message copied using fallback method');
+      } catch (fallbackError) {
+        console.error('[App] Fallback copy also failed:', fallbackError);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   // 🐛 修复问题2：停止AI生成

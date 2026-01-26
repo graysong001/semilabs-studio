@@ -11,20 +11,20 @@ import * as vscode from 'vscode';
 export class SemipilotWebviewProviderTest implements vscode.WebviewViewProvider {
   public static readonly viewType = 'semipilot.chatView';
   
-  private _view?: vscode.WebviewView;
+  // private _view?: vscode.WebviewView;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _extensionContext: vscode.ExtensionContext
+    private readonly __extensionContext: vscode.ExtensionContext
   ) {}
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void | Thenable<void> {
     console.log('[TEST] resolveWebviewView called');
-    this._view = webviewView;
+    // this._view = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
@@ -47,7 +47,7 @@ export class SemipilotWebviewProviderTest implements vscode.WebviewViewProvider 
     });
   }
 
-  private _getTestHtml(webview: vscode.Webview): string {
+  private _getTestHtml(_webview: vscode.Webview): string {
     const nonce = this._getNonce();
 
     return `<!DOCTYPE html>

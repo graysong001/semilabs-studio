@@ -77,7 +77,7 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({ onAction }) => {
     }
   };
 
-  const getFileName = (path: string) => path.split(/[/\\]/).pop() || path;
+  // const getFileName = (path: string) => path.split(/[/\\]/).pop() || path;
 
   const canArchiveAll = specs.length > 0 && specs.every(s => s.workflowState === 'MERGE_READY');
 

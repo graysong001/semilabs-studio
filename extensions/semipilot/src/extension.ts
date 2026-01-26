@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('[Semipilot] Backend will connect when user sends first message');
   
   // Register error handler
-  messenger.onError((message, error) => {
+  messenger.onError((_message, error) => {
     vscode.window.showErrorMessage(`Semipilot Error: ${error.message}`);
   });
   
@@ -65,27 +65,21 @@ export function activate(context: vscode.ExtensionContext) {
   
   // Register command: Open Chat
   const openChatCommand = vscode.commands.registerCommand('semipilot.openChat', async () => {
-    // The webview will be shown automatically when command is triggered
-    // Focus on the webview panel
-    await vscode.commands.executeCommand('semipilot.chatView.focus');
-    
-    vscode.window.showInformationMessage('Semipilot Chat Panel opened');
-    
-    // Slice 4: 启动 Workflow SSE 连接
-    if (!messenger.isWorkflowConnectedToBackend()) {
-      console.log('[Semipilot] Connecting to Workflow SSE...');
-      messenger.connectWorkflow();
-    }
-    
-    // TODO: Remove this test code after Phase 1 Week 2
-    // Test: Send Hello World to Backend
     try {
-      const snapshot = await messenger.request('domain-graph/get-snapshot', undefined as any);
-      vscode.window.showInformationMessage(
-        `Domain Graph: ${snapshot.totalDomains} domains found`
-      );
+      // The webview will be shown automatically when command is triggered
+      // Focus on the webview panel
+      await vscode.commands.executeCommand('semipilot.chatView.focus');
+      
+      vscode.window.showInformationMessage('Semipilot Chat Panel opened');
+      
+      // Slice 4: 启动 Workflow SSE 连接
+      if (!messenger.isWorkflowConnectedToBackend()) {
+        console.log('[Semipilot] Connecting to Workflow SSE...');
+        messenger.connectWorkflow();
+      }
     } catch (error) {
-      vscode.window.showErrorMessage(`Failed to get domain graph: ${error}`);
+      console.error('[Semipilot] Error opening chat:', error);
+      vscode.window.showErrorMessage(`Failed to open Semipilot Chat: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
   
@@ -116,6 +110,26 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  messenger?.disconnect();
-  console.log('[Semipilot] Extension deactivated');
+  try {
+    // Clean up messenger
+    if (messenger) {
+      messenger.disconnect();
+      messenger = undefined as any;
+    }
+    
+    // Clean up context manager
+    if (contextManager) {
+      contextManager.dispose();
+      contextManager = undefined as any;
+    }
+    
+    // Clean up webview provider
+    if (webviewProvider) {
+      webviewProvider = undefined as any;
+    }
+    
+    console.log('[Semipilot] Extension deactivated successfully');
+  } catch (error) {
+    console.error('[Semipilot] Error during deactivation:', error);
+  }
 }

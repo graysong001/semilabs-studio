@@ -16,6 +16,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { IContextProvider, ContextItem, ContextProviderDescription } from './IContextProvider';
 
+// 文件大小限制：5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 interface SpecMetadata {
   id: string;
   domain?: string;
@@ -35,7 +38,7 @@ export class SpecContextProvider implements IContextProvider {
   private fileWatcher?: vscode.FileSystemWatcher;
   private isIndexed = false;
 
-  constructor(private readonly workspaceRoot: string) {
+  constructor(private readonly _workspaceRoot: string) {
     this.initializeIndex();
   }
 
@@ -85,6 +88,15 @@ export class SpecContextProvider implements IContextProvider {
   async getContent(id: string): Promise<ContextItem | null> {
     try {
       const uri = vscode.Uri.file(id);
+      
+      // 检查文件大小
+      const stat = await vscode.workspace.fs.stat(uri);
+      if (stat.size > MAX_FILE_SIZE) {
+        console.warn(`[SpecContextProvider] File too large (${stat.size} bytes), skipping: ${id}`);
+        vscode.window.showWarningMessage(`Spec file is too large (${Math.round(stat.size / 1024 / 1024)}MB), maximum is 5MB: ${path.basename(id)}`);
+        return null;
+      }
+      
       const content = await vscode.workspace.fs.readFile(uri);
       const text = Buffer.from(content).toString('utf8');
 
@@ -102,11 +114,12 @@ export class SpecContextProvider implements IContextProvider {
           domain: metadata?.domain,
           version: metadata?.version,
           status: metadata?.status,
-          lineCount: text.split('\n').length
+          lineCount: text.split('\n').length,
+          fileSize: stat.size
         }
       };
     } catch (error) {
-      console.error('Failed to read spec file:', id, error);
+      console.error(`[SpecContextProvider] Failed to read spec file: ${id}`, error);
       return null;
     }
   }
@@ -176,64 +189,144 @@ export class SpecContextProvider implements IContextProvider {
   /**
    * 解析 Spec Frontmatter
    * 
+   * 支持标准YAML格式的Frontmatter，包含：
+   * - 简单key: value
+   * - 带引号的值
+   * - 多行值（缩进）
+   * 
    * 示例:
    * ---
    * id: cap-persona-poe
    * domain: domain-agent
    * version: 2.1
    * status: APPROVED
-   * title: Poe - 需求分析 Agent
+   * title: "Poe - 需求分析 Agent"
+   * description: |
+   *   多行描述
+   *   第二行
    * ---
    */
   private async parseSpecMetadata(uri: vscode.Uri): Promise<SpecMetadata | null> {
-    const content = await vscode.workspace.fs.readFile(uri);
-    const text = Buffer.from(content).toString('utf8');
+    try {
+      // 检查文件大小
+      const stat = await vscode.workspace.fs.stat(uri);
+      if (stat.size > MAX_FILE_SIZE) {
+        console.warn(`[SpecContextProvider] File too large for parsing (${stat.size} bytes): ${uri.fsPath}`);
+        return null;
+      }
+      
+      const content = await vscode.workspace.fs.readFile(uri);
+      const text = Buffer.from(content).toString('utf8');
 
-    // Extract frontmatter (between --- and ---)
-    const frontmatterMatch = text.match(/^---\s*\n([\s\S]*?)\n---/);
-    if (!frontmatterMatch) {
-      // No frontmatter, use filename as ID
-      const filename = path.basename(uri.fsPath, '.md');
-      return {
-        id: filename,
-        title: filename
+      // Extract frontmatter (between --- and ---)
+      const frontmatterMatch = text.match(/^---\s*\n([\s\S]*?)\n---/);
+      if (!frontmatterMatch) {
+        // No frontmatter, use filename as ID
+        const filename = path.basename(uri.fsPath, '.md');
+        return {
+          id: filename,
+          title: filename
+        };
+      }
+
+      const frontmatter = frontmatterMatch[1];
+      const metadata: SpecMetadata = {
+        id: path.basename(uri.fsPath, '.md') // Default to filename
       };
-    }
 
-    const frontmatter = frontmatterMatch[1];
-    const lines = frontmatter.split('\n');
-    const metadata: SpecMetadata = {
-      id: path.basename(uri.fsPath, '.md') // Default to filename
-    };
+      // 改进的YAML解析逻辑
+      const lines = frontmatter.split('\n');
+      let currentKey: string | null = null;
+      let currentValue = '';
+      let isMultiline = false;
 
-    for (const line of lines) {
-      const match = line.match(/^(\w+):\s*(.+)$/);
-      if (match) {
-        const [, key, value] = match;
-        switch (key) {
-          case 'id':
-            metadata.id = value.trim();
-            break;
-          case 'domain':
-            metadata.domain = value.trim();
-            break;
-          case 'version':
-            metadata.version = value.trim();
-            break;
-          case 'status':
-            metadata.status = value.trim() as SpecMetadata['status'];
-            break;
-          case 'title':
-            metadata.title = value.trim();
-            break;
-          case 'description':
-            metadata.description = value.trim();
-            break;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        // 空行，跳过
+        if (!line.trim()) {
+          continue;
+        }
+        
+        // 检查是否是新的key-value对
+        const keyValueMatch = line.match(/^(\w+):\s*(.*)$/);
+        
+        if (keyValueMatch && !isMultiline) {
+          // 保存之前的key-value
+          if (currentKey) {
+            this.setMetadataValue(metadata, currentKey, currentValue.trim());
+          }
+          
+          currentKey = keyValueMatch[1];
+          let value = keyValueMatch[2].trim();
+          
+          // 检查是否是多行值（以 | 或 > 开头）
+          if (value === '|' || value === '>') {
+            isMultiline = true;
+            currentValue = '';
+          } else {
+            // 移除引号
+            if ((value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+              value = value.slice(1, -1);
+            }
+            currentValue = value;
+            isMultiline = false;
+          }
+        } else if (isMultiline && line.startsWith('  ')) {
+          // 多行值的续行（有缩进）
+          currentValue += (currentValue ? '\n' : '') + line.trim();
+        } else if (isMultiline) {
+          // 多行值结束
+          if (currentKey) {
+            this.setMetadataValue(metadata, currentKey, currentValue.trim());
+          }
+          currentKey = null;
+          currentValue = '';
+          isMultiline = false;
         }
       }
-    }
 
-    return metadata;
+      // 保存最后一个key-value
+      if (currentKey) {
+        this.setMetadataValue(metadata, currentKey, currentValue.trim());
+      }
+
+      return metadata;
+    } catch (error) {
+      console.error(`[SpecContextProvider] Error parsing spec metadata for ${uri.fsPath}:`, error);
+      // 返回基本元数据而非null
+      return {
+        id: path.basename(uri.fsPath, '.md'),
+        title: path.basename(uri.fsPath, '.md')
+      };
+    }
+  }
+
+  /**
+   * 设置元数据字段的值
+   */
+  private setMetadataValue(metadata: SpecMetadata, key: string, value: string): void {
+    switch (key) {
+      case 'id':
+        metadata.id = value;
+        break;
+      case 'domain':
+        metadata.domain = value;
+        break;
+      case 'version':
+        metadata.version = value;
+        break;
+      case 'status':
+        metadata.status = value as SpecMetadata['status'];
+        break;
+      case 'title':
+        metadata.title = value;
+        break;
+      case 'description':
+        metadata.description = value;
+        break;
+    }
   }
 
   /**
@@ -272,7 +365,7 @@ export class SpecContextProvider implements IContextProvider {
     }
   }
 
-  private formatDescription(metadata?: SpecMetadata): string {
+  private _formatDescription(metadata?: SpecMetadata): string {
     if (!metadata) return '';
     const parts: string[] = [];
     if (metadata.domain) parts.push(`Domain: ${metadata.domain}`);

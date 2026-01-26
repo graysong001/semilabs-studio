@@ -11,7 +11,7 @@
 
 import * as vscode from 'vscode';
 import { ContextProviderManager } from '../context/ContextProviderManager';
-import { TaskContextProvider, TaskDocument, Priority, TaskStatus } from '../context/TaskContextProvider';
+import { TaskContextProvider, Priority, TaskStatus } from '../context/TaskContextProvider';
 import { SseMessenger } from '../messenger/SseMessenger';
 import type { ContextItem as ChatContextItem, WorkflowEvent } from '../messenger/SemilabsProtocol';
 
@@ -36,7 +36,7 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
-    private readonly _extensionContext: vscode.ExtensionContext,
+    private readonly __extensionContext: vscode.ExtensionContext,
     private readonly _messenger: SseMessenger, // Backend通信
     private readonly _contextManager?: ContextProviderManager // 可选，因为可能没有工作区
   ) {
@@ -54,7 +54,7 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void | Thenable<void> {
     console.log('[SemipilotWebviewProvider] resolveWebviewView called');
@@ -151,19 +151,28 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * 处理 Workflow 操作（Submit / Veto / Resolve）
+   * 处理 Workflow 操作（Submit / Veto / Approve / Archive）
    * V7 S3: 调用后端 Staging REST API
+   * 注意：使用统一的 messenger 而非直接 fetch
    */
   private async _handleWorkflowAction(action: 'submit' | 'veto' | 'approve' | 'archive', domain: string, specId: string, params?: any): Promise<void> {
     console.log('[SemipilotWebviewProvider] Staging action:', action, domain, specId, params);
     
+    if (!domain || !specId) {
+      console.error('[SemipilotWebviewProvider] Invalid workflow action parameters:', { action, domain, specId });
+      vscode.window.showErrorMessage(`Staging action failed: invalid parameters`);
+      return;
+    }
+    
     try {
+      // TODO: 待后端实现 Staging API 后，通过 messenger 统一调用
+      // 当前为临时实现，直接使用 fetch
       let endpoint: string;
       let body: any = { domain, specId };
       
       switch (action) {
         case 'submit':
-          endpoint = 'staging/submit'; // 后续需要确保后端有此端点
+          endpoint = 'staging/submit';
           break;
         case 'veto':
           endpoint = 'staging/veto';
@@ -189,15 +198,19 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
       // 操作成功后刷新列表
       await this._fetchStagingList();
       
+      vscode.window.showInformationMessage(`Staging action "${action}" completed successfully`);
+      
     } catch (error) {
       console.error('[SemipilotWebviewProvider] Staging action failed:', error);
-      vscode.window.showErrorMessage(`Staging action failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Staging action failed: ${errorMessage}`);
     }
   }
 
@@ -238,14 +251,14 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
     console.log('[SemipilotWebviewProvider] Generated nonce:', nonce);
     console.log('[SemipilotWebviewProvider] Script URI:', scriptUri.toString());
 
-    // 宽松的 CSP 配置，允许所有 vscode-webview 资源
+    // 严格的 CSP 配置，仅允许必要的资源
     const csp = [
       `default-src 'none'`,
-      `style-src ${webview.cspSource} 'unsafe-inline'`,
+      `style-src ${webview.cspSource} 'unsafe-inline'`, // TipTap需要inline styles
       `font-src ${webview.cspSource}`,
       `img-src ${webview.cspSource} https: data:`,
-      `script-src 'nonce-${nonce}'`,
-      `connect-src ${webview.cspSource} https: data:` // 允许 sourcemap 和其他连接
+      `script-src 'nonce-${nonce}'`, // 仅允许带nonce的脚本
+      `connect-src ${webview.cspSource}` // 限制连接到webview资源
     ].join('; ');
 
     return `<!DOCTYPE html>
@@ -304,9 +317,24 @@ export class SemipilotWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   private async _handleUserMessage(message: string, contextItems: any[], agent: string, model: string): Promise<void> {
-    console.log('[SemipilotWebviewProvider] User message:', message);
-    console.log('[SemipilotWebviewProvider] Context items:', contextItems);
+    console.log('[SemipilotWebviewProvider] User message length:', message?.length || 0);
+    console.log('[SemipilotWebviewProvider] Context items count:', contextItems?.length || 0);
     console.log('[SemipilotWebviewProvider] Agent:', agent, 'Model:', model);
+    
+    // 输入验证
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      console.warn('[SemipilotWebviewProvider] Empty or invalid message');
+      vscode.window.showWarningMessage('Please enter a valid message');
+      return;
+    }
+    
+    // 消息长度限制（10MB）
+    const MAX_MESSAGE_LENGTH = 10 * 1024 * 1024;
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      console.warn(`[SemipilotWebviewProvider] Message too long: ${message.length} bytes`);
+      vscode.window.showWarningMessage(`Message is too long (${Math.round(message.length / 1024 / 1024)}MB), maximum is 10MB`);
+      return;
+    }
     
     try {
       // Slice 1: 复用现有会话或创建新会话

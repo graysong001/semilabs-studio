@@ -138,7 +138,7 @@ describe('Workflow SSE Integration Tests', function() {
   });
 
   describe('多事件类型支持', function() {
-    const eventTypes = [
+    const _eventTypes = [
       'DRAFT_UPDATED',
       'PROPOSAL_READY',
       'REVIEW_SUBMITTED',

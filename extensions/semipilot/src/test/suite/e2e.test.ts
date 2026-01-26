@@ -26,7 +26,7 @@ suite('Task List UI - E2E Tests', () => {
   suite('Happy Path Scenarios', () => {
     test('Scenario: 输入/tasks展示任务列表', async () => {
       // Given: VS Code Extension已加载，Chat Panel已打开
-      const chatView = await vscode.commands.executeCommand('semipilot.openChat');
+      await vscode.commands.executeCommand('semipilot.openChat');
       
       // When: 用户输入 "/tasks"
       // Note: 需要模拟用户输入，这里通过命令触发
@@ -52,7 +52,7 @@ suite('Task List UI - E2E Tests', () => {
         'spec-task-test-001.md'
       );
       
-      const testTaskContent = `---
+      const _testTaskContent = `---
 task_id: task-test-001
 status: PENDING
 priority: HIGH

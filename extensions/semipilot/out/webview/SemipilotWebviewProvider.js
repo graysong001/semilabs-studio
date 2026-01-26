@@ -57,11 +57,11 @@ class SemipilotWebviewProvider {
             filePath,
         });
     }
-    constructor(_extensionUri, _extensionContext, _messenger, // Backend通信
+    constructor(_extensionUri, __extensionContext, _messenger, // Backend通信
     _contextManager // 可选，因为可能没有工作区
     ) {
         this._extensionUri = _extensionUri;
-        this._extensionContext = _extensionContext;
+        this.__extensionContext = __extensionContext;
         this._messenger = _messenger;
         this._contextManager = _contextManager;
         // 初始化TaskContextProvider
@@ -74,7 +74,7 @@ class SemipilotWebviewProvider {
             this._handleWorkflowEvent(message.data);
         });
     }
-    resolveWebviewView(webviewView, context, _token) {
+    resolveWebviewView(webviewView, _context, _token) {
         console.log('[SemipilotWebviewProvider] resolveWebviewView called');
         this._view = webviewView;
         webviewView.webview.options = {
@@ -162,17 +162,25 @@ class SemipilotWebviewProvider {
         });
     }
     /**
-     * 处理 Workflow 操作（Submit / Veto / Resolve）
+     * 处理 Workflow 操作（Submit / Veto / Approve / Archive）
      * V7 S3: 调用后端 Staging REST API
+     * 注意：使用统一的 messenger 而非直接 fetch
      */
     async _handleWorkflowAction(action, domain, specId, params) {
         console.log('[SemipilotWebviewProvider] Staging action:', action, domain, specId, params);
+        if (!domain || !specId) {
+            console.error('[SemipilotWebviewProvider] Invalid workflow action parameters:', { action, domain, specId });
+            vscode.window.showErrorMessage(`Staging action failed: invalid parameters`);
+            return;
+        }
         try {
+            // TODO: 待后端实现 Staging API 后，通过 messenger 统一调用
+            // 当前为临时实现，直接使用 fetch
             let endpoint;
             let body = { domain, specId };
             switch (action) {
                 case 'submit':
-                    endpoint = 'staging/submit'; // 后续需要确保后端有此端点
+                    endpoint = 'staging/submit';
                     break;
                 case 'veto':
                     endpoint = 'staging/veto';
@@ -196,14 +204,17 @@ class SemipilotWebviewProvider {
                 body: JSON.stringify(body),
             });
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const errorText = await response.text().catch(() => 'Unknown error');
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
             // 操作成功后刷新列表
             await this._fetchStagingList();
+            vscode.window.showInformationMessage(`Staging action "${action}" completed successfully`);
         }
         catch (error) {
             console.error('[SemipilotWebviewProvider] Staging action failed:', error);
-            vscode.window.showErrorMessage(`Staging action failed: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(`Staging action failed: ${errorMessage}`);
         }
     }
     /**
@@ -237,14 +248,14 @@ class SemipilotWebviewProvider {
         const nonce = this._getNonce();
         console.log('[SemipilotWebviewProvider] Generated nonce:', nonce);
         console.log('[SemipilotWebviewProvider] Script URI:', scriptUri.toString());
-        // 宽松的 CSP 配置，允许所有 vscode-webview 资源
+        // 严格的 CSP 配置，仅允许必要的资源
         const csp = [
             `default-src 'none'`,
-            `style-src ${webview.cspSource} 'unsafe-inline'`,
+            `style-src ${webview.cspSource} 'unsafe-inline'`, // TipTap需要inline styles
             `font-src ${webview.cspSource}`,
             `img-src ${webview.cspSource} https: data:`,
-            `script-src 'nonce-${nonce}'`,
-            `connect-src ${webview.cspSource} https: data:` // 允许 sourcemap 和其他连接
+            `script-src 'nonce-${nonce}'`, // 仅允许带nonce的脚本
+            `connect-src ${webview.cspSource}` // 限制连接到webview资源
         ].join('; ');
         return `<!DOCTYPE html>
 <html lang="en">
@@ -301,9 +312,22 @@ class SemipilotWebviewProvider {
 </html>`;
     }
     async _handleUserMessage(message, contextItems, agent, model) {
-        console.log('[SemipilotWebviewProvider] User message:', message);
-        console.log('[SemipilotWebviewProvider] Context items:', contextItems);
+        console.log('[SemipilotWebviewProvider] User message length:', message?.length || 0);
+        console.log('[SemipilotWebviewProvider] Context items count:', contextItems?.length || 0);
         console.log('[SemipilotWebviewProvider] Agent:', agent, 'Model:', model);
+        // 输入验证
+        if (!message || typeof message !== 'string' || message.trim().length === 0) {
+            console.warn('[SemipilotWebviewProvider] Empty or invalid message');
+            vscode.window.showWarningMessage('Please enter a valid message');
+            return;
+        }
+        // 消息长度限制（10MB）
+        const MAX_MESSAGE_LENGTH = 10 * 1024 * 1024;
+        if (message.length > MAX_MESSAGE_LENGTH) {
+            console.warn(`[SemipilotWebviewProvider] Message too long: ${message.length} bytes`);
+            vscode.window.showWarningMessage(`Message is too long (${Math.round(message.length / 1024 / 1024)}MB), maximum is 10MB`);
+            return;
+        }
         try {
             // Slice 1: 复用现有会话或创建新会话
             // TODO(Slice 2): 管理多个会话，持久化sessionId

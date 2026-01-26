@@ -32,7 +32,7 @@ async function main() {
     bundle: true,
     format: 'iife',
     minify: production,
-    sourcemap: false,  // 暂时禁用 sourcemap 以便调试
+    sourcemap: !production, // 开发环境启用sourcemap，生产环境禁用
     sourcesContent: false,
     platform: 'browser',
     outfile: 'out/webview.js',
@@ -49,10 +49,15 @@ async function main() {
           build.onLoad({ filter: /\.css$/ }, async (args) => {
             const fs = require('fs');
             const css = await fs.promises.readFile(args.path, 'utf8');
+            // 转义CSS中的特殊字符以防止XSS
+            const escapedCss = css
+              .replace(/\\/g, '\\\\')
+              .replace(/`/g, '\\`')
+              .replace(/\${/g, '\\${');
             return {
               contents: `
                 const style = document.createElement('style');
-                style.textContent = ${JSON.stringify(css)};
+                style.textContent = \`${escapedCss}\`;
                 document.head.appendChild(style);
               `,
               loader: 'js',

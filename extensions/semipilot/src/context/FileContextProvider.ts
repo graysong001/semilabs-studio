@@ -10,6 +10,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { IContextProvider, ContextItem, ContextProviderDescription } from './IContextProvider';
 
+// 文件大小限制：5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export class FileContextProvider implements IContextProvider {
   readonly id = 'file';
   readonly title = 'file';
@@ -58,6 +61,15 @@ export class FileContextProvider implements IContextProvider {
   async getContent(id: string): Promise<ContextItem | null> {
     try {
       const uri = vscode.Uri.file(id);
+      
+      // 检查文件大小
+      const stat = await vscode.workspace.fs.stat(uri);
+      if (stat.size > MAX_FILE_SIZE) {
+        console.warn(`[FileContextProvider] File too large (${stat.size} bytes), skipping: ${id}`);
+        vscode.window.showWarningMessage(`File is too large (${Math.round(stat.size / 1024 / 1024)}MB), maximum is 5MB: ${path.basename(id)}`);
+        return null;
+      }
+      
       const document = await vscode.workspace.openTextDocument(uri);
       const content = document.getText();
 
@@ -71,11 +83,21 @@ export class FileContextProvider implements IContextProvider {
         metadata: {
           uri: uri.toString(),
           language: document.languageId,
-          lineCount: document.lineCount
+          lineCount: document.lineCount,
+          fileSize: stat.size
         }
       };
     } catch (error) {
-      console.error('Failed to read file:', id, error);
+      console.error(`[FileContextProvider] Failed to read file: ${id}`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // 提供更详细的错误信息
+      if (errorMessage.includes('ENOENT')) {
+        console.error(`[FileContextProvider] File not found: ${id}`);
+      } else if (errorMessage.includes('EACCES')) {
+        console.error(`[FileContextProvider] Permission denied: ${id}`);
+      }
+      
       return null;
     }
   }

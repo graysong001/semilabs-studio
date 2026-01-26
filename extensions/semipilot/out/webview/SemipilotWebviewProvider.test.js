@@ -43,13 +43,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SemipilotWebviewProviderTest = void 0;
 const vscode = __importStar(require("vscode"));
 class SemipilotWebviewProviderTest {
-    constructor(_extensionUri, _extensionContext) {
+    // private _view?: vscode.WebviewView;
+    constructor(_extensionUri, __extensionContext) {
         this._extensionUri = _extensionUri;
-        this._extensionContext = _extensionContext;
+        this.__extensionContext = __extensionContext;
     }
-    resolveWebviewView(webviewView, context, _token) {
+    resolveWebviewView(webviewView, _context, _token) {
         console.log('[TEST] resolveWebviewView called');
-        this._view = webviewView;
+        // this._view = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
@@ -67,7 +68,7 @@ class SemipilotWebviewProviderTest {
             }
         });
     }
-    _getTestHtml(webview) {
+    _getTestHtml(_webview) {
         const nonce = this._getNonce();
         return `<!DOCTYPE html>
 <html lang="en">

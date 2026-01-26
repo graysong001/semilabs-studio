@@ -72,7 +72,7 @@ function activate(context) {
     console.log('[Semipilot] SseMessenger initialized in manual mode');
     console.log('[Semipilot] Backend will connect when user sends first message');
     // Register error handler
-    messenger.onError((message, error) => {
+    messenger.onError((_message, error) => {
         vscode.window.showErrorMessage(`Semipilot Error: ${error.message}`);
     });
     const webviewProviderInstance = new SemipilotWebviewProvider_1.SemipilotWebviewProvider(context.extensionUri, context, messenger, // 传递 messenger
@@ -84,23 +84,20 @@ function activate(context) {
     (0, taskCommands_1.registerTaskCommands)(context);
     // Register command: Open Chat
     const openChatCommand = vscode.commands.registerCommand('semipilot.openChat', async () => {
-        // The webview will be shown automatically when command is triggered
-        // Focus on the webview panel
-        await vscode.commands.executeCommand('semipilot.chatView.focus');
-        vscode.window.showInformationMessage('Semipilot Chat Panel opened');
-        // Slice 4: 启动 Workflow SSE 连接
-        if (!messenger.isWorkflowConnectedToBackend()) {
-            console.log('[Semipilot] Connecting to Workflow SSE...');
-            messenger.connectWorkflow();
-        }
-        // TODO: Remove this test code after Phase 1 Week 2
-        // Test: Send Hello World to Backend
         try {
-            const snapshot = await messenger.request('domain-graph/get-snapshot', undefined);
-            vscode.window.showInformationMessage(`Domain Graph: ${snapshot.totalDomains} domains found`);
+            // The webview will be shown automatically when command is triggered
+            // Focus on the webview panel
+            await vscode.commands.executeCommand('semipilot.chatView.focus');
+            vscode.window.showInformationMessage('Semipilot Chat Panel opened');
+            // Slice 4: 启动 Workflow SSE 连接
+            if (!messenger.isWorkflowConnectedToBackend()) {
+                console.log('[Semipilot] Connecting to Workflow SSE...');
+                messenger.connectWorkflow();
+            }
         }
         catch (error) {
-            vscode.window.showErrorMessage(`Failed to get domain graph: ${error}`);
+            console.error('[Semipilot] Error opening chat:', error);
+            vscode.window.showErrorMessage(`Failed to open Semipilot Chat: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
     context.subscriptions.push(openChatCommand);
@@ -123,7 +120,25 @@ function activate(context) {
     console.log('[Semipilot] Extension activated successfully');
 }
 function deactivate() {
-    messenger?.disconnect();
-    console.log('[Semipilot] Extension deactivated');
+    try {
+        // Clean up messenger
+        if (messenger) {
+            messenger.disconnect();
+            messenger = undefined;
+        }
+        // Clean up context manager
+        if (contextManager) {
+            contextManager.dispose();
+            contextManager = undefined;
+        }
+        // Clean up webview provider
+        if (webviewProvider) {
+            webviewProvider = undefined;
+        }
+        console.log('[Semipilot] Extension deactivated successfully');
+    }
+    catch (error) {
+        console.error('[Semipilot] Error during deactivation:', error);
+    }
 }
 //# sourceMappingURL=extension.js.map
