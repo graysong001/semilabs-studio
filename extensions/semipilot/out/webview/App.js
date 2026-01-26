@@ -49,7 +49,7 @@ const rehype_highlight_1 = __importDefault(require("rehype-highlight"));
 const TipTapEditor_1 = require("./TipTapEditor");
 const SlashCommandHandler_1 = require("./SlashCommandHandler");
 const WorkflowCard_1 = require("./WorkflowCard");
-const DraftStagingWidget_1 = require("./DraftStagingWidget");
+const ReasoningDeck_1 = require("./ReasoningDeck");
 const IntentProposalCard_1 = require("./IntentProposalCard");
 const TribunalCard_1 = require("./TribunalCard");
 const App = () => {
@@ -161,6 +161,17 @@ const App = () => {
                             targetFile: workflowEvent.target,
                             workflowState: workflowEvent.workflowState,
                         });
+                        // 同时在聊天记录中插入一条提示
+                        if (workflowEvent.type === 'VETO_APPLIED') {
+                            const loopInfo = workflowEvent.payload?.loopCount !== undefined ? ` (Round ${workflowEvent.payload.loopCount + 1}/3)` : '';
+                            const vetoMsg = {
+                                id: `veto-${Date.now()}`,
+                                content: `🛑 **ARCHI VETO**${loopInfo}\n\nArchi 发现了架构不一致，正在打回 Poe 修正。`,
+                                isUser: false,
+                                timestamp: Date.now(),
+                            };
+                            setMessages(prev => [...prev, vetoMsg]);
+                        }
                     }
                     else if (workflowEvent.type === 'WORKFLOW_APPROVED') {
                         // 清除卡片
@@ -341,43 +352,38 @@ const App = () => {
         }
     }, []);
     /**
-     * 处理 Workflow 操作（Submit / Veto / Resolve）
-     * Slice 4: 调用后端 API 并在 Chat 流中插入操作卡片
+     * 处理 Workflow 操作（Submit / Veto / Resolve / Approve / Archive）
+     * V7 S3: 调用后端 Staging API 并在 Chat 流中插入操作卡片
      */
-    const handleWorkflowAction = (0, react_1.useCallback)((action, target, params) => {
-        console.log('[App] Workflow action:', action, target, params);
+    const handleWorkflowAction = (0, react_1.useCallback)((action, domain, specId, params) => {
+        console.log('[App] Staging action:', action, domain, specId, params);
         // 1. 发送到 Extension Host
         if (vscodeRef.current) {
             vscodeRef.current.postMessage({
                 type: 'workflowAction',
                 action,
-                target,
+                domain,
+                specId,
                 params,
             });
         }
-        // 2. 在 Chat 流中插入操作卡片（类似 Tool Card）
+        // 2. 在 Chat 流中插入操作卡片
         const actionNames = {
             submit: 'Submit for Review',
             veto: 'Veto',
-            resolve: 'Resolve',
+            approve: 'Approve',
+            archive: 'Archive Spec',
         };
-        const fileName = target.split(/[\/\\]/).pop() || target;
         let operationDetail = '';
         if (action === 'veto' && params?.reason) {
             operationDetail = `\n**原因**: ${params.reason}`;
-            if (params.suggestion) {
-                operationDetail += `\n**建议**: ${params.suggestion}`;
-            }
-        }
-        else if (action === 'resolve') {
-            operationDetail = '\n✅ 用户确认已修复';
         }
         const operationMsg = {
             id: Date.now().toString(),
-            content: `🛠️ **Workflow 操作**
-
+            content: `🛠️ **Staging 操作**
+      
 操作: **${actionNames[action]}**
-目标: \`${fileName}\`${operationDetail}
+目标: \`${domain}/${specId}\`${operationDetail}
 
 ⏳ 正在处理...`,
             isUser: false,
@@ -417,8 +423,12 @@ const App = () => {
      */
     const handleApproveFix = (0, react_1.useCallback)(async (targetFile) => {
         console.log('[App] Approve Fix:', targetFile);
-        // 调用 Workflow Resolve API
-        handleWorkflowAction('resolve', targetFile, { userApproved: true });
+        // 调用 Workflow Approve API
+        // 解析 domain 和 specId
+        const parts = targetFile.split('/');
+        const domain = parts.length > 1 ? parts[parts.length - 2] : 'squad';
+        const specId = parts[parts.length - 1].replace('.md', '');
+        handleWorkflowAction('approve', domain, specId);
         // 清除 Tribunal Card
         setTribunalCardData(null);
     }, [handleWorkflowAction]);
@@ -434,26 +444,14 @@ const App = () => {
             });
         }
     }, []);
-    /**
-     * Slice 4: 处理 Open File 操作
-     */
-    const handleOpenFile = (0, react_1.useCallback)((filePath) => {
-        console.log('[App] Open File:', filePath);
-        if (vscodeRef.current) {
-            vscodeRef.current.postMessage({
-                type: 'openFile',
-                filePath,
-            });
-        }
-    }, []);
     return (react_1.default.createElement("div", { className: "app-container" },
-        react_1.default.createElement("div", { className: "header" },
+        react_1.default.createElement("div", { className: "header", style: { borderBottom: '1px solid var(--semipilot-purple-glow)', background: 'linear-gradient(90deg, var(--vscode-sideBar-background) 0%, rgba(142, 68, 173, 0.05) 100%)' } },
             react_1.default.createElement("div", { className: "header-left" },
-                react_1.default.createElement("svg", { className: "header-icon", viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" },
+                react_1.default.createElement("svg", { className: "header-icon", viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "var(--semipilot-purple-light)" },
                     react_1.default.createElement("path", { d: "M8.5 1a.5.5 0 0 0-1 0v1h-1a.5.5 0 0 0 0 1h1v.5A2.5 2.5 0 0 0 5 6v1H3.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5H11V6a2.5 2.5 0 0 0-2.5-2.5V3h1a.5.5 0 0 0 0-1h-1V1zM6 6a1.5 1.5 0 0 1 3 0v1H6V6z" }),
                     react_1.default.createElement("circle", { cx: "6", cy: "9", r: ".5" }),
                     react_1.default.createElement("circle", { cx: "10", cy: "9", r: ".5" })),
-                react_1.default.createElement("span", { className: "header-title" }, "SEMIPILOT: CHAT")),
+                react_1.default.createElement("span", { className: "header-title", style: { color: 'var(--semipilot-purple-light)' } }, "SEMIPILOT")),
             react_1.default.createElement("div", { className: "header-actions" },
                 react_1.default.createElement("button", { className: "header-btn", onClick: handleNewChat, title: "New chat" },
                     react_1.default.createElement("svg", { viewBox: "0 0 16 16", xmlns: "http://www.w3.org/2000/svg", fill: "currentColor" },
@@ -481,15 +479,17 @@ const App = () => {
                         item.type === 'spec' ? '📄' : '📁',
                         " ",
                         item.label))))))) : (
-                // AI 回复：Markdown 渲染
-                react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default], rehypePlugins: [rehype_highlight_1.default], components: {
-                        code(props) {
-                            const { node, inline, className, children, ...rest } = props;
-                            const match = /language-(\w+)/.exec(className || '');
-                            return !inline && match ? (react_1.default.createElement("pre", { className: `language-${match[1]}` },
-                                react_1.default.createElement("code", { className: className, ...rest }, children))) : (react_1.default.createElement("code", { className: className, ...rest }, children));
-                        },
-                    } }, msg.content))),
+                // AI 回复：结构化推理投影 + Markdown 渲染
+                react_1.default.createElement(react_1.default.Fragment, null,
+                    react_1.default.createElement(ReasoningDeck_1.ReasoningDeck, { content: msg.content }),
+                    react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default], rehypePlugins: [rehype_highlight_1.default], components: {
+                            code(props) {
+                                const { node, inline, className, children, ...rest } = props;
+                                const match = /language-(\w+)/.exec(className || '');
+                                return !inline && match ? (react_1.default.createElement("pre", { className: `language-${match[1]}` },
+                                    react_1.default.createElement("code", { className: className, ...rest }, children))) : (react_1.default.createElement("code", { className: className, ...rest }, children));
+                            },
+                        } }, msg.content)))),
                 react_1.default.createElement("div", { className: "message-actions" },
                     react_1.default.createElement("button", { className: "message-copy-btn", onClick: () => copyMessage(msg.content), title: "Copy message" }, "\uD83D\uDCCB"))))),
             isWaiting && (react_1.default.createElement("div", { className: "message loading-message" },
@@ -503,7 +503,6 @@ const App = () => {
                         "s")))),
             proposalCardData && (react_1.default.createElement(IntentProposalCard_1.IntentProposalCard, { summary: proposalCardData.summary, targetFile: proposalCardData.targetFile, confidence: proposalCardData.confidence, onGenerate: handleGenerateSpec, onCancel: () => setProposalCardData(null) })),
             tribunalCardData && (react_1.default.createElement(TribunalCard_1.TribunalCard, { vetoReason: tribunalCardData.vetoReason, vetoRequirement: tribunalCardData.vetoRequirement, fixSummary: tribunalCardData.fixSummary, targetFile: tribunalCardData.targetFile, workflowState: tribunalCardData.workflowState, onViewDiff: handleViewDiff, onApproveFix: handleApproveFix }))))),
-        react_1.default.createElement(DraftStagingWidget_1.DraftStagingWidget, { onOpenFile: handleOpenFile }),
         react_1.default.createElement(WorkflowCard_1.WorkflowCard, { onAction: handleWorkflowAction }),
         react_1.default.createElement("div", { className: "input-container" },
             react_1.default.createElement("div", { className: "input-wrapper" },

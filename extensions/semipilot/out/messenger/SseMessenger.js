@@ -207,7 +207,19 @@ class SseMessenger extends IMessenger_1.InProcessMessenger {
             }
         });
         // 兼容后端可能使用 WorkflowEventType 作为 event name
-        const eventTypes = ['DRAFT_UPDATED', 'PROPOSAL_READY', 'REVIEW_SUBMITTED', 'VETO_APPLIED', 'FIX_SUBMITTED', 'WORKFLOW_APPROVED'];
+        const eventTypes = [
+            'DRAFT_UPDATED',
+            'PROPOSAL_READY',
+            'REVIEW_SUBMITTED',
+            'VETO_APPLIED',
+            'FIX_SUBMITTED',
+            'WORKFLOW_APPROVED',
+            'PHASE_STARTED',
+            'PHASE_COMPLETED',
+            'STAGING_UPDATED',
+            'STAGING_MERGE_READY',
+            'STAGING_MERGED'
+        ];
         eventTypes.forEach(eventType => {
             eventSource.addEventListener(eventType, (event) => {
                 try {
